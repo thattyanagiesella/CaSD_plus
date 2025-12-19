@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en-US" dir="ltr">
+
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+    <!-- ===============================================-->
+    <!--    Document Title-->
+    <!-- ===============================================-->
+    <title>CaSD | Cashless Society Detector - Admin Login</title>
+
+
+    <!-- ===============================================-->
+    <!--    Favicons-->
+    <!-- ===============================================-->
+    <link rel="shortcut icon" type="image/x-icon" href="{{ url_for('static', filename='assets/img/favicons/favicon.png') }}">
+    <link rel="manifest" href="{{ url_for('static', filename='assets/img/favicons/manifest.json') }}">
+    <meta name="theme-color" content="#ffffff">
+
+
+    <!-- ===============================================-->
+    <!--    Stylesheets-->
+    <!-- ===============================================-->
+    <link href="{{ url_for('static', filename='assets/css/theme.css') }}" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&amp;family=Volkhov:wght@700&amp;display=swap" rel="stylesheet">
+    <style>
+      .admin-container:hover {
+        box-shadow: 0 4px 8px #b4b4b4;
+      }
+      .nav-link:hover {
+        color: #a53d7a !important;
+      }
+      /* Consistent form input styling */
+      .form-control, .form-select {
+        border-radius: 0.375rem !important;
+      }
+      .form-control:focus, .form-select:focus {
+        border-radius: 0.375rem !important;
+        box-shadow: 0 0 0 0.2rem rgba(165, 61, 122, 0.25) !important;
+      }
+      /* Questionnaire specific styling */
+      .question-card {
+        margin-bottom: 2rem;
+      }
+      .question-item {
+        margin-bottom: 1.5rem;
+        padding: 1.5rem;
+        background-color: #ffffff;
+        border-radius: 0.5rem;
+        border: 1px solid #e9ddecef;
+      }
+      .questionnaire-title {
+        color: #F5D2D2 !important;
+      }
+      .variable-name {
+        color: #631040 !important;
+      }
+      .radio-group {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      .radio-btn {
+        border: 2px solid #631040;
+        color: #631040;
+        background-color: transparent;
+        border-radius: 1rem;
+        padding: 0.5rem 1rem;
+        transition: all 0.2s ease;
+      }
+      .radio-btn:hover {
+        background-color: #631040;
+        color: white;
+      }
+      .radio-btn input[type="radio"] {
+        display: none;
+      }
+      .radio-btn.checked {
+        background-color: #631040;
+        color: white;
+      }
+      /* New form styling */
+      .card-option {
+        margin: 0;
+      }
+      .card-option .form-check-input {
+        display: none;
+      }
+      .card-option-label {
+        cursor: pointer;
+        border-radius: 0.5rem;
+        border: 2px solid #dee2e6;
+        transition: all 0.2s ease;
+      }
+      .card-option-label:hover {
+        border-color: #b5195f;
+      }
+      .card-option input[type="radio"]:checked + .card-option-label {
+        border-color: #b5195f;
+        background-color: #f8f9fa;
+      }
+      .option-content {
+        min-width: 80px;
+      }
+      .option-text {
+        color: #979797;
+      }
+      .card-option input[type="radio"]:checked + .card-option-label .option-text {
+        color: #b5195f;
+      }
+    </style>
+  </head>
+
+
+  <body>
+
+    <!-- ===============================================-->
+    <!--    Main Content-->
+    <!-- ===============================================-->
+    <main class="main" id="top">
+      <nav class="navbar navbar-expand-lg navbar-light sticky-top" data-navbar-on-scroll="data-navbar-on-scroll">
+        <div class="container"><a class="navbar-brand" href="{{ url_for('index') }}"><img src="{{ url_for('static', filename='assets/img/logo.svg') }}" height="31" alt="logo" /></a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"> </span></button>
+          <div class="collapse navbar-collapse border-top border-lg-0 mt-4 mt-lg-0" id="navbarSupportedContent">
+            <ul class="navbar-nav ms-auto">
+              <li class="nav-item"><a class="nav-link" aria-current="page" href="{{ url_for('index') }}">Tentang</a></li>
+              <li class="nav-item"><a class="nav-link" aria-current="page" href="{{ url_for('kuisioner') }}">Kuisioner</a></li>
+            </ul>
+            <div class="d-flex ms-lg-4 justify-content-center" style="background-color: #F5D2D2; border-radius: 10px;"><a class="btn btn-custom" style="color: #631040;" href="{{ url_for('admin_login') }}">Admin</a></div>
+          </div>
+        </div>
+      </nav>
+      <section class="pt-7">
+        <div class="container">
+          <div class="row align-items-center">
+            <!-- Left Column: Image -->
+            <div class="col-md-6">
+              <div class="text-center">
+                <img src="{{ url_for('static', filename='assets/img/hero/admin.png') }}" alt="Admin Login" class="img-fluid rounded" style="max-width: 100%; height: auto;">
+              </div>
+            </div>
+            <!-- Right Column: Login Form -->
+            <div class="col-md-6">
+              <div class="card shadow-lg border-0 mb-5" style="border-radius: 0.5rem;">
+                <div class="card-header text-white py-4" style="background-color: #631040; border-radius: 0.75rem 0.75rem 0 0;">
+                  <h3 class="mb-1 questionnaire-title"><i class="fas fa-lock me-2"></i>Admin Login</h3>
+                  <p class="mb-0 opacity-75">Akses Clustering Result</p>
+                </div>
+                <div class="card-body" style="background-color: #ffffff; border-radius: 0 0 0.75rem 0.75rem;">
+                  {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                      {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm" role="alert">
+                          {{ message }}
+                          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                      {% endfor %}
+                    {% endif %}
+                  {% endwith %}
+
+                  <div class="row justify-content-center">
+                    <div class="col-md-8">
+                      <form method="POST" action="{{ url_for('admin_login') }}">
+                        <div class="mb-4">
+                          <label class="form-label fw-bold" style="color: #b5195f;">Username</label>
+                          <input type="text" name="username" class="form-control form-control-lg" placeholder="Masukkan username" required>
+                        </div>
+
+                        <div class="mb-4">
+                          <label class="form-label fw-bold" style="color: #b5195f;">Password</label>
+                          <input type="password" name="password" class="form-control form-control-lg" placeholder="Masukkan password" required>
+                        </div>
+
+                        <div class="text-center mt-4">
+                          <button type="submit" class="btn btn-lg px-5" style="background-color: #631040; border-color: #631040; color: white; border-radius: 0.5rem;">
+                            <i class="fas fa-sign-in-alt me-2"></i>Login
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <!-- ============================================-->
+      <!-- <section> begin ============================-->
+      <section class="pb-2 pb-lg-5">
+
+        <div class="container">
+          <div class="row border-top border-top-secondary pt-7">
+            <div class="col-lg-6 col-md-6 mb-4 mb-md-6 mb-lg-0 mb-sm-2 order-1 order-md-1 order-lg-1">
+              <img class="mb-4" src="{{ url_for('static', filename='assets/img/logo.svg') }}" width="184" alt="" />
+              <p class="mb-lg-" style="font-size: 18px;">Departemen Statistika Universitas Brawijaya</p>
+              <ul class="list-unstyled mb-0">
+                <li class="mb-lg-1" style="font-size: 15px;" >Jalan Veteran, Malang, 65145</a></li>
+                <li class="mb-lg-1" style="font-size: 15px;" >Jawa Timur, Indonesia</a></li>
+                <li class="mb-lg-1" style="font-size: 15px;">jurstatub@ub.ac.id</a></li>
+              </ul>
+            </div>
+          </div>
+        </div><!-- end of .container-->
+
+      </section>
+      <!-- <section> close ============================-->
+      <!-- ============================================-->
+
+      <!-- ============================================-->
+      <!-- <section> begin ============================-->
+      <section class="text-center py-0">
+
+        <div class="container">
+          <div class="container border-top py-3">
+            <div class="row justify-content-between">
+              <div class="col-12 col-md-auto">
+                <p class="mb-0">
+                  Made with<span class="fas fa-heart mx-1 text-danger"> </span>by <a class="text-decoration-none ms-1" href="https://statistika.ub.ac.id/" target="_blank">Departemen Statistika Universitas Brawijaya</a></p>
+              </div>
+            </div>
+          </div>
+        </div><!-- end of .container-->
+
+      </section>
+      <!-- <section> close ============================-->
+      <!-- ============================================-->
+
+
+    </main>
+    <!-- ===============================================-->
+    <!--    End of Main Content-->
+    <!-- ===============================================-->
+
+
+    <!-- ===============================================-->
+    <!--    JavaScripts-->
+    <!-- ===============================================-->
+    <script src="{{ url_for('static', filename='vendors/@popperjs/popper.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='vendors/bootstrap/bootstrap.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='vendors/is/is.min.js') }}"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=window.scroll"></script>
+    <script src="{{ url_for('static', filename='vendors/fontawesome/all.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='assets/js/theme.js') }}"></script>
+  </body>
+
+</html>

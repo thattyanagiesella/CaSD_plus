@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en-US" dir="ltr">
+
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+    <!-- ===============================================-->
+    <!--    Document Title-->
+    <!-- ===============================================-->
+    <title>CaSD | Cashless Society Detector - Kuisioner</title>
+
+
+    <!-- ===============================================-->
+    <!--    Favicons-->
+    <!-- ===============================================-->
+    <link rel="shortcut icon" type="image/x-icon" href="{{ url_for('static', filename='assets/img/favicons/favicon.png') }}">
+    <link rel="manifest" href="{{ url_for('static', filename='assets/img/favicons/manifest.json') }}">
+    <meta name="theme-color" content="#ffffff">
+
+
+    <!-- ===============================================-->
+    <!--    Stylesheets-->
+    <!-- ===============================================-->
+    <link href="{{ url_for('static', filename='assets/css/theme.css') }}" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&amp;family=Volkhov:wght@700&amp;display=swap" rel="stylesheet">
+    <style>
+      .admin-container:hover {
+        box-shadow: 0 4px 8px #b4b4b4;
+      }
+      .nav-link:hover {
+        color: #a53d7a !important;
+      }
+      /* Consistent form input styling */
+      .form-control, .form-select {
+        border-radius: 0.375rem !important;
+      }
+      .form-control:focus, .form-select:focus {
+        border-radius: 0.375rem !important;
+        box-shadow: 0 0 0 0.2rem rgba(165, 61, 122, 0.25) !important;
+      }
+      /* Questionnaire specific styling */
+      .question-card {
+        margin-bottom: 2rem;
+      }
+      .question-item {
+        margin-bottom: 1.5rem;
+        padding: 1.5rem;
+        background-color: #ffffff;
+        border-radius: 0.5rem;
+        border: 1px solid #e9ddecef;
+      }
+      .questionnaire-title {
+        color: #F5D2D2 !important;
+      }
+      .variable-name {
+        color: #631040 !important;
+      }
+      .radio-group {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      .radio-btn {
+        border: 2px solid #631040;
+        color: #631040;
+        background-color: transparent;
+        border-radius: 1rem;
+        padding: 0.5rem 1rem;
+        transition: all 0.2s ease;
+      }
+      .radio-btn:hover {
+        background-color: #631040;
+        color: white;
+      }
+      .radio-btn input[type="radio"] {
+        display: none;
+      }
+      .radio-btn.checked {
+        background-color: #631040;
+        color: white;
+      }
+      /* New form styling */
+      .card-option {
+        margin: 0;
+      }
+      .card-option .form-check-input {
+        display: none;
+      }
+      .card-option-label {
+        cursor: pointer;
+        border-radius: 0.5rem;
+        border: 2px solid #dee2e6;
+        transition: all 0.2s ease;
+      }
+      .card-option-label:hover {
+        border-color: #b5195f;
+      }
+      .card-option input[type="radio"]:checked + .card-option-label {
+        border-color: #b5195f;
+        background-color: #f8f9fa;
+      }
+      .option-content {
+        min-width: 80px;
+      }
+      .option-text {
+        color: #979797;
+      }
+      .card-option input[type="radio"]:checked + .card-option-label .option-text {
+        color: #b5195f;
+      }
+    </style>
+  </head>
+
+
+  <body>
+
+    <!-- ===============================================-->
+    <!--    Main Content-->
+    <!-- ===============================================-->
+    <main class="main" id="top">
+      <nav class="navbar navbar-expand-lg navbar-light sticky-top" data-navbar-on-scroll="data-navbar-on-scroll">
+        <div class="container"><a class="navbar-brand" href="{{ url_for('index') }}"><img src="{{ url_for('static', filename='assets/img/logo.svg') }}" height="31" alt="logo" /></a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"> </span></button>
+          <div class="collapse navbar-collapse border-top border-lg-0 mt-4 mt-lg-0" id="navbarSupportedContent">
+            <ul class="navbar-nav ms-auto">
+              <li class="nav-item"><a class="nav-link" aria-current="page" href="{{ url_for('index') }}">Tentang</a></li>
+              <li class="nav-item"><a class="nav-link" aria-current="page" href="{{ url_for('kuisioner') }}">Kuisioner</a></li>
+            </ul>
+            <div class="d-flex ms-lg-4 justify-content-center" style="background-color: #F5D2D2; border-radius: 10px;"><a class="btn btn-custom" style="color: #631040;" href="{{ url_for('admin_login') }}">Admin</a></div>
+          </div>
+        </div>
+      </nav>
+      <section class="pt-7">
+        <div class="container">
+          <div class="row justify-content-center">
+            <div class="col-12">
+              <div class="card shadow-lg border-0 mb-5" style="border-radius: 0.5rem;">
+                <div class="card-header text-white py-4" style="background-color: #631040; border-radius: 0.75rem 0.75rem 0 0;">
+                  <h3 class="mb-1 questionnaire-title">Kuesioner Penelitian</h3>
+                  <p class="mb-0 opacity-75">Responden: <strong>{{ nama }}</strong> | Wilayah: <strong>{{ wilayah_name }}</strong></p>
+                </div>
+                <div class="card-body" style="background-color: #ffffff;">
+                  {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                      {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm" role="alert">
+                          {{ message }}
+                          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                      {% endfor %}
+                    {% endif %}
+                  {% endwith %}
+
+                  <div class="d-flex justify-content-center gap-3 mb-4">
+                    <div class="scale-item p-3 rounded-3 text-center" style="background-color: #f8f9fa; border: 1px solid #dee2e6; min-width: 140px;">
+                      <strong style="color: #b5195f;">STS</strong><br>
+                      <small>Sangat Tidak Setuju</small>
+                    </div>
+                    <div class="scale-item p-3 rounded-3 text-center" style="background-color: #f8f9fa; border: 1px solid #dee2e6; min-width: 140px;">
+                      <strong style="color: #b5195f;">TS</strong><br>
+                      <small>Tidak Setuju</small>
+                    </div>
+                    <div class="scale-item p-3 rounded-3 text-center" style="background-color: #f8f9fa; border: 1px solid #dee2e6; min-width: 140px;">
+                      <strong style="color: #b5195f;">R</strong><br>
+                      <small>Ragu-ragu</small>
+                    </div>
+                    <div class="scale-item p-3 rounded-3 text-center" style="background-color: #f8f9fa; border: 1px solid #dee2e6; min-width: 140px;">
+                      <strong style="color: #b5195f;">S</strong><br>
+                      <small>Setuju</small>
+                    </div>
+                    <div class="scale-item p-3 rounded-3 text-center" style="background-color: #f8f9fa; border: 1px solid #dee2e6; min-width: 140px;">
+                      <strong style="color: #b5195f;">SS</strong><br>
+                      <small>Sangat Setuju</small>
+                    </div>
+                  </div>
+
+                  {% set option_labels = ['STS', 'TS', 'R', 'S', 'SS'] %}
+                  <form method="POST" action="{{ url_for('submit_kuisioner') }}" id="kuisionerForm">
+                    {% for var_key, var_data in questions.items() %}
+                    <div class="card mb-4 border-0 shadow-sm">
+                      <div class="card-header" style="background-color: #f5e5e3; color: #b5195f; border-radius: 15px 15px 0 0;">
+                        <h5 class="mb-0" style="color: #b5195f;"><strong>{{ var_data.name }}</strong></h5>
+                      </div>
+                      <div class="card-body p-4">
+                        {% for item_key, item_data in var_data['items'].items() %}
+                        <div class="question-item mb-4 p-4 rounded-3" style="background-color: #ffffff; border-radius: 1rem;">
+                          <div class="question-text mb-4">
+                            <h6 class="fw-bold" style="color: #6C757D;">{{ item_data.text }}</h6>
+                          </div>
+                          <div class="likert-options">
+                            <div class="row g-3 justify-content-center">
+                              {% for option in likert_options %}
+                              <div class="col-auto">
+                                <div class="form-check card-option">
+                                  <input class="form-check-input" type="radio" name="{{ item_key }}" value="{{ option }}" id="{{ item_key }}_{{ loop.index }}">
+                                  <label class="form-check-label card-option-label" for="{{ item_key }}_{{ loop.index }}">
+                                    <div class="option-content p-3 text-center">
+                                      <div class="option-text fw-bold">{{ option_labels[loop.index0] }}</div>
+                                    </div>
+                                  </label>
+                                </div>
+                              </div>
+                              {% endfor %}
+                            </div>
+                          </div>
+                        </div>
+                        {% endfor %}
+                      </div>
+                    </div>
+                    {% endfor %}
+
+                    <button class="btn btn-lg w-40 mt-4 d-block mx-auto" style="background-color: #631040; border-color: #631040; color: white; border-radius: 0.5rem;">Kirim Jawaban</button>
+                  </form>
+                  </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <!-- ============================================-->
+      <!-- <section> begin ============================-->
+      <section class="pb-2 pb-lg-5">
+
+        <div class="container">
+          <div class="row border-top border-top-secondary pt-7">
+            <div class="col-lg-6 col-md-6 mb-4 mb-md-6 mb-lg-0 mb-sm-2 order-1 order-md-1 order-lg-1">
+              <img class="mb-4" src="{{ url_for('static', filename='assets/img/logo.svg') }}" width="184" alt="" />
+              <p class="mb-lg-" style="font-size: 18px;">Departemen Statistika Universitas Brawijaya</p>
+              <ul class="list-unstyled mb-0">
+                <li class="mb-lg-1" style="font-size: 15px;" >Jalan Veteran, Malang, 65145</a></li>
+                <li class="mb-lg-1" style="font-size: 15px;" >Jawa Timur, Indonesia</a></li>
+                <li class="mb-lg-1" style="font-size: 15px;">jurstatub@ub.ac.id</a></li>
+              </ul>
+            </div>
+          </div>
+        </div><!-- end of .container-->
+
+      </section>
+      <!-- <section> close ============================-->
+      <!-- ============================================-->
+
+      <!-- ============================================-->
+      <!-- <section> begin ============================-->
+      <section class="text-center py-0">
+
+        <div class="container">
+          <div class="container border-top py-3">
+            <div class="row justify-content-between">
+              <div class="col-12 col-md-auto">
+                <p class="mb-0">
+                  Made with<span class="fas fa-heart mx-1 text-danger"> </span>by <a class="text-decoration-none ms-1" href="https://statistika.ub.ac.id/" target="_blank">Departemen Statistika Universitas Brawijaya</a></p>
+              </div>
+            </div>
+          </div>
+        </div><!-- end of .container-->
+
+      </section>
+      <!-- <section> close ============================-->
+      <!-- ============================================-->
+
+
+    </main>
+    <!-- ===============================================-->
+    <!--    End of Main Content-->
+    <!-- ===============================================-->
+
+    <!-- Toast Notification -->
+    <div class="toast-container position-fixed end-0 p-3" style="top: 80px;">
+      <div id="validationToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+          <strong class="me-auto" style="color: #b5195f;">Peringatan</strong>
+          <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body">
+          Harap isi seluruh pertanyaan sebelum mengirimkan jawaban!
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ===============================================-->
+    <!--    JavaScripts-->
+    <!-- ===============================================-->
+    <script src="{{ url_for('static', filename='vendors/@popperjs/popper.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='vendors/bootstrap/bootstrap.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='vendors/is/is.min.js') }}"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=window.scroll"></script>
+    <script src="{{ url_for('static', filename='vendors/fontawesome/all.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='assets/js/theme.js') }}"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('form');
+        const toastEl = document.getElementById('validationToast');
+        const toast = new bootstrap.Toast(toastEl, { autohide: true, delay: 5000 });
+
+        // Form validation on submit
+        form.addEventListener('submit', function(event) {
+          const radioGroups = form.querySelectorAll('input[type="radio"]');
+          const groupNames = new Set();
+          radioGroups.forEach(radio => groupNames.add(radio.name));
+
+          let allAnswered = true;
+          groupNames.forEach(name => {
+            const group = form.querySelectorAll(`input[name="${name}"]`);
+            const checked = Array.from(group).some(radio => radio.checked);
+            if (!checked) {
+              allAnswered = false;
+            }
+          });
+
+          if (!allAnswered) {
+            event.preventDefault(); // Prevent form submission
+            toast.show(); // Show the toast notification
+          }
+        });
+
+        // Auto-scroll to next question
+        function scrollToNextQuestion(currentQuestion) {
+            const nextQuestion = currentQuestion.nextElementSibling;
+            if (nextQuestion && nextQuestion.classList.contains('question-item')) {
+                nextQuestion.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        // Attach event listeners to all radio buttons
+        const radioButtons = form.querySelectorAll('input[type="radio"]');
+        radioButtons.forEach(radio => {
+            radio.addEventListener('change', function() {
+                // Find the parent question item and scroll to next
+                const questionItem = this.closest('.question-item');
+                if (questionItem) {
+                    setTimeout(() => scrollToNextQuestion(questionItem), 300); // Delay for smooth transition
+                }
+            });
+        });
+
+        // Center the first question on page load
+        const firstQuestion = document.querySelector('.question-item');
+        if (firstQuestion) {
+          setTimeout(() => {
+            firstQuestion.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 1000);
+        }
+      });
+    </script>
+  </body>
+
+</html>

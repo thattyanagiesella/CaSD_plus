@@ -1,0 +1,59 @@
+/* -------------------------------------------------------------------------- */
+/*                                 Theme                                      */
+/* -------------------------------------------------------------------------- */
+
+@import "../../node_modules/bootstrap/scss/_functions.scss";
+@import "theme/functions";
+
+@import "../../node_modules/bootstrap/scss/mixins";
+@import "theme/mixins";
+
+@import "user-variables";
+@import "theme/variables";
+@import 'theme/_utilities.scss';
+@import "../../node_modules/bootstrap/scss/variables";
+
+/*-----------------------------------------------
+|   Bootstrap Styles
+-----------------------------------------------*/
+@import "bootstrap";
+
+/*-----------------------------------------------
+|   Theme Styles
+-----------------------------------------------*/
+@import "theme/theme";
+
+/*-----------------------------------------------
+|   User Styles
+-----------------------------------------------*/
+@import "user";
+
+/*-----------------------------------------------
+|   Custom Backgrounds
+-----------------------------------------------*/
+.bg-category {
+  background-image: url('../img/category/shape.png');
+  opacity: .5;
+}
+.bg-superhero {
+  background-image: url('../img/superhero/oval.png');
+  opacity: .5;
+  background-position: top;
+}
+
+/*-----------------------------------------------
+|   Custom Button Colors
+-----------------------------------------------*/
+.btn-custom {
+  background-color: #336699;
+  border-color: #336699;
+  color: #fff;
+}
+.btn-custom:hover {
+  background-color: #285180;
+  border-color: #285180;
+  color: #fff;
+}
+.btn-custom:focus {
+  box-shadow: 0 0 0 0.2rem rgba(165, 61, 122, 0.25) !important;
+}

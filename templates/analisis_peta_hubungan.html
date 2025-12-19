@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en-US" dir="ltr">
+
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- ===============================================-->
+    <!--    Document Title-->
+    <!-- ===============================================-->
+    <title>CaSD Admin | Analisis Peta Hubungan</title>
+
+    <!-- ===============================================-->
+    <!--    Favicons-->
+    <!-- ===============================================-->
+    <link rel="shortcut icon" type="image/x-icon" href="{{ url_for('static', filename='assets/img/favicons/favicon.png') }}">
+    <link rel="manifest" href="{{ url_for('static', filename='assets/img/favicons/manifest.json') }}">
+    <meta name="theme-color" content="#ffffff">
+
+    <!-- ===============================================-->
+    <!--    Stylesheets-->
+    <!-- ===============================================-->
+    <link href="{{ url_for('static', filename='assets/css/theme.css') }}" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+      :root {
+        --bs-primary: #000000;
+        --bs-primary-rgb: 0,0,0;
+      }
+      .admin-container:hover {
+        box-shadow: 0 4px 8px #b4b4b4;
+      }
+      .nav-link:hover {
+        color: #a53d7a !important;
+      }
+      body {
+        background-color: #f8fafc;
+      }
+      .card { border-radius: 15px; }
+      .card-header { border-radius: 15px 15px 0 0 !important; }
+      .table th { font-weight: 600; }
+      .badge { font-size: 0.7em; }
+      .pagination .page-item.active .page-link {
+        background-color: #631040 !important;
+        border-color: #631040 !important;
+      }
+      .pagination .page-link {
+        color: #631040;
+      }
+      .pagination .page-link:hover {
+        color: #631040;
+      }
+      #btnY1, #btnY2, #btnY3 {
+        box-shadow: none !important;
+      }
+      #btnY1:active, #btnY2:active, #btnY3:active {
+        box-shadow: none !important;
+      }
+      #btnY1:focus, #btnY2:focus, #btnY3:focus {
+        box-shadow: none !important;
+      }
+      #btnY1, #btnY2, #btnY3, #recOverallBtn, #recWilayahBtn {
+        box-shadow: none !important;
+      }
+      #btnY1:active, #btnY2:active, #btnY3:active, #recOverallBtn:active, #recWilayahBtn:active {
+        box-shadow: none !important;
+      }
+      #btnY1:focus, #btnY2:focus, #btnY3:focus, #recOverallBtn:focus, #recWilayahBtn:focus {
+        box-shadow: none !important;
+      }
+      #btnY1, #btnY2, #btnY3, #recOverallBtn, #recWilayahBtn {
+        background-color: #FFFFFF;
+        color: #b5195f;
+        border-color: #FFFFFF;
+      }
+      .badge-tinggi {
+        background-color: #bde3c3 !important;
+        color: #000 !important;
+      }
+      .badge-sedang {
+        background-color: #f8f7ba !important;
+        color: #000 !important;
+      }
+      .badge-rendah {
+        background-color: #e77777 !important;
+        color: #000 !important;
+      }
+      .card-tinggi {
+        border-color: #bde3c3 !important;
+      }
+      .card-sedang {
+        border-color: #f8f7ba !important;
+      }
+      .card-rendah {
+        border-color: #e77777 !important;
+      }
+      .header-tinggi {
+        background-color: #bde3c3 !important;
+        color: #000 !important;
+      }
+      .header-sedang {
+        background-color: #f8f7ba !important;
+        color: #000 !important;
+      }
+      .header-rendah {
+        background-color: #e77777 !important;
+        color: #000 !important;
+      }
+    </style>
+  </head>
+
+  <body>
+
+    <!-- ===============================================-->
+    <!--    Main Content-->
+    <!-- ===============================================-->
+    <main class="main" id="top">
+      <nav class="navbar navbar-expand-lg navbar-light sticky-top" data-navbar-on-scroll="data-navbar-on-scroll">
+        <div class="container"><a class="navbar-brand" href="{{ url_for('index') }}"><img src="{{ url_for('static', filename='assets/img/logo.svg') }}" height="31" alt="logo" /></a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"> </span></button>
+          <div class="collapse navbar-collapse border-lg-0 mt-4 mt-lg-0" id="navbarSupportedContent">
+            <ul class="navbar-nav ms-auto">
+              <li class="nav-item"><a class="nav-link" aria-current="page" href="{{ url_for('data_responden_admin') }}">Data Responden</a></li>
+              <li class="nav-item"><a class="nav-link" aria-current="page" href="{{ url_for('clustering_result') }}">Statistika Deskriptif</a></li>
+              <li class="nav-item"><a class="nav-link" aria-current="page" href="{{ url_for('analisis_peta_hubungan') }}">Analisis Peta Hubungan</a></li>
+            </ul>
+            <div class="d-flex ms-lg-4 justify-content-center" style="background-color: #F5D2D2; border-radius: 10px;"><a class="btn btn-custom" style="color: #631040; font-weight: bold;" href="{{ url_for('admin_logout') }}">Log Out</a></div>
+          </div>
+        </div>
+      </nav>
+
+      <section class="pt-7">
+        <div class="container">
+
+          <!-- ==================== ANALISIS PETA HUBUNGAN ==================== -->
+          <div class="card shadow-lg border-0 mb-3" style="border-radius: 0.75rem;">
+            <div class="card-header text-white py-3" style="background-color: #631040; border-radius: 0.75rem 0.75rem 0 0;">
+              <h3 class="mb-1" style="font-size: 18px;"><i class="fas fa-project-diagram me-2"></i>Analisis Peta Hubungan</h3>
+            </div>
+            <div class="card-body">
+
+              <div class="row mb-4">
+                <div class="col-md-6">
+                  <label class="form-label fw-bold">Pilih Wilayah untuk Analisis Peta Hubungan</label>
+                  <form method="GET" class="d-flex gap-2">
+                    <select name="wilayah" class="form-select" onchange="this.form.submit()">
+                      <option value="" {% if not selected_wilayah %}selected{% endif %}>Pilih Wilayah</option>
+                      {% for wid in avg_x_scores_by_wilayah.keys() %}
+                      <option value="{{ wid }}" {% if selected_wilayah == wid %}selected{% endif %}>
+                        {{ WILAYAH_MAP.get(wid, wid) }}
+                      </option>
+                      {% endfor %}
+                    </select>
+                  </form>
+                </div>
+              </div>
+
+              <!-- VISUALISASI PETA HUBUNGAN -->
+              <div class="card mb-4 border-0 shadow-lg">
+                <div class="card-header" style="background-color: #f5e5e3;">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0" style="color: #b5195f;">
+                      <i class="fas fa-network-wired me-2"></i>
+                      Visualisasi Peta Hubungan Variabel
+                    </h6>
+                    <div class="d-flex gap-2" role="group">
+                      <button type="button" id="btnY1" class="btn btn-light active">
+                        <i class="fas fa-money-bill-wave me-1"></i>Digitalisasi Uang Elektronik
+                      </button>
+                      <button type="button" id="btnY2" class="btn btn-light">
+                        <i class="fas fa-credit-card me-1"></i>Cashless Society
+                      </button>
+                      <button type="button" id="btnY3" class="btn btn-light">
+                        <i class="fas fa-chart-line me-1"></i>Pemulihan Ekonomi
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card-body">
+                  {% if sem_diagrams %}
+                  <div class="text-center mb-4">
+                    <div id="petaHubunganContainer">
+                      {% for y_key, diagram in sem_diagrams.items() %}
+                      <div class="peta-hubungan-image {% if loop.first %}active{% else %}d-none{% endif %}" id="peta-{{ y_key }}">
+                        <img src="data:image/png;base64,{{ diagram }}"
+                             class="img-fluid rounded shadow"
+                             alt="Peta Hubungan {{ y_key }}"
+                             style="max-height: 450px; border: 2px solid #e9ecef;">
+                      </div>
+                      {% endfor %}
+                    </div>
+                  </div>
+
+                  <!-- Legend Variabel -->
+                  <div class="row mt-4">
+                    <div class="col-12">
+                      <div class="card border-light">
+                        <div class="card-header bg-light">
+                          <h6 class="mb-0 text-primary">
+                            <i class="fas fa-list me-2"></i>Keterangan Variabel
+                          </h6>
+                        </div>
+                        <div class="card-body p-3 px-4">
+                          <div class="row g-2">
+                            {% for i in range(1,11) %}
+                            {% set x_key = "X" ~ i %}
+                            <div class="col-lg-3 col-md-4 col-sm-6">
+                              <div class="d-flex align-items-center mb-1">
+                                <span class="badge bg-info me-2" style="font-size: 0.7em;">{{ x_key }}</span>
+                                <small class="text-muted" style="font-size: 0.75em;">{{ X_VAR_NAME.get(x_key, x_key) }}</small>
+                              </div>
+                            </div>
+                            {% endfor %}
+                            <div class="col-lg-3 col-md-4 col-sm-6">
+                              <div class="d-flex align-items-center mb-1">
+                                <span class="badge bg-danger me-2" style="font-size: 0.7em;">Y1</span>
+                                <small class="text-muted" style="font-size: 0.75em;">Digitalisasi Uang Elektronik</small>
+                              </div>
+                            </div>
+                            <div class="col-lg-3 col-md-4 col-sm-6">
+                              <div class="d-flex align-items-center mb-1">
+                                <span class="badge bg-success me-2" style="font-size: 0.7em;">Y2</span>
+                                <small class="text-muted" style="font-size: 0.75em;">Cashless Society</small>
+                              </div>
+                            </div>
+                            <div class="col-lg-3 col-md-4 col-sm-6">
+                              <div class="d-flex align-items-center mb-1">
+                                <span class="badge bg-warning me-2" style="font-size: 0.7em;">Y3</span>
+                                <small class="text-muted" style="font-size: 0.75em;">Pemulihan Ekonomi</small>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="mt-3 p-2 bg-light rounded">
+                            <small class="text-muted" style="font-size: 0.8em;">
+                              <i class="fas fa-info-circle me-1 text-primary"></i>
+                              <strong>Keterangan Visualisasi:</strong> Diagram menunjukkan hubungan pengaruh antara variabel independen (X) dan dependen (Y).
+                              Garis hijau menunjukkan pengaruh positif.
+                            </small>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  {% else %}
+                  <div class="text-center text-muted py-5">
+                    <i class="fas fa-project-diagram fa-4x mb-3"></i>
+                    <p>Belum ada data peta hubungan untuk wilayah terpilih.</p>
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+
+              <!-- REKOMENDASI DENGAN TOGGLE -->
+              <div class="card mb-4 border-0 shadow-lg">
+                <div class="card-header" style="background-color: #f5e5e3;">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0" style="color: #b5195f;"><i class="fas fa-bullseye me-2"></i>Rekomendasi Peningkatan</h6>
+                    <div class="d-flex gap-2" role="group">
+                      <button id="recOverallBtn" class="btn btn-light active">
+                        <i class="fas fa-globe me-1"></i>Keseluruhan
+                      </button>
+                      <button id="recWilayahBtn" class="btn btn-light">
+                        <i class="fas fa-map-marker-alt me-1"></i>Per Wilayah
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div class="card-body">
+                  <!-- Rekomendasi Keseluruhan -->
+                  <div id="recOverall">
+                    {% if overall_recommendations %}
+                    <div class="row">
+                    {% for rec in overall_recommendations %}
+                    <div class="col-md-12 mb-3">
+                    <div class="card border-0 shadow-sm">
+                      <div class="card-header {% if rec.kategori == 'Tinggi' %}header-tinggi{% elif rec.kategori == 'Sedang' %}header-sedang{% else %}header-rendah{% endif %} py-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                          <h6 class="mb-0" style="font-size: 0.9rem;">
+                            <i class="fas {% if rec.kategori == 'Tinggi' %}fa-check-circle{% elif rec.kategori == 'Sedang' %}fa-exclamation-triangle{% else %}fa-exclamation-circle{% endif %} me-2"></i>
+                            {{ rec.y }}
+                          </h6>
+                          <div>
+                            {% if rec.nilai %}
+                            <span class="badge bg-light text-dark me-1" style="font-size: 0.7rem;">
+                              Nilai: {{ "%.2f"|format(rec.nilai) }}
+                            </span>
+                            {% endif %}
+                            {% if rec.kategori %}
+                            <span class="badge {% if rec.kategori == 'Tinggi' %}bg-success{% elif rec.kategori == 'Sedang' %}bg-warning{% else %}bg-danger{% endif %}" style="font-size: 0.7rem;">
+                              {{ rec.kategori }}
+                            </span>
+                            {% endif %}
+                          </div>
+                        </div>
+                      </div>
+                      <div class="card-body p-3">
+                          {% if rec.improvement_strategies %}
+                          <h6 class="mb-2" style="font-size: 0.85rem; color: black;">
+                            <i class="fas fa-arrow-up me-2"></i>Strategi Peningkatan Prioritas Keseluruhan:
+                          </h6>
+                              <div class="row g-2">
+                                {% for strategy in rec.improvement_strategies[:3] %}
+                                <div class="col-md-4 mb-2">
+                                  <div class="card border-primary h-100 {% if strategy.influence > 0.5 %}card-tinggi{% elif strategy.influence > 0.2 %}card-sedang{% else %}card-rendah{% endif %}">
+                                    <div class="card-header bg-light py-1 px-2">
+                                      <div class="d-flex justify-content-between align-items-center">
+                                        <strong class="text-primary" style="font-size: 0.8rem;">{{ strategy.name }}</strong>
+                                        <span class="badge bg-secondary" style="font-size: 0.65rem;">Skor: {{ "%.2f"|format(strategy.current_score) }}</span>
+                                      </div>
+                                    </div>
+                                    <div class="card-body p-2">
+                                      <p class="mb-1" style="font-size: 0.75rem; line-height: 1.2;">{{ strategy.strategy }}</p>
+                                      <div class="d-flex justify-content-between align-items-center mt-1">
+                                        <small class="text-muted" style="font-size: 0.7rem;">
+                                          <i class="fas fa-chart-line me-1"></i>
+                                          Pengaruh: {{ "%.3f"|format(strategy.influence) }}
+                                        </small>
+                                        <span class="badge {% if strategy.influence > 0.5 %}badge-tinggi{% elif strategy.influence > 0.2 %}badge-sedang{% else %}badge-rendah{% endif %}" style="font-size: 0.65rem;">
+                                          {% if strategy.influence > 0.5 %}Tinggi
+                                          {% elif strategy.influence > 0.2 %}Sedang
+                                          {% else %}Rendah{% endif %}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                                {% endfor %}
+                              </div>
+                          {% else %}
+                          <div class="text-center text-muted py-2">
+                            <i class="fas fa-check-circle fa-lg text-success mb-1"></i>
+                            <p class="mb-0" style="font-size: 0.8rem;">Tidak ada rekomendasi peningkatan khusus untuk wilayah ini.</p>
+                          </div>
+                          {% endif %}
+                        </div>
+                      </div>
+                    </div>
+                    </div>
+                    {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-4">
+                      <i class="fas fa-globe fa-2x mb-2"></i>
+                      <p class="mb-0" style="font-size: 0.9rem;">Belum ada rekomendasi keseluruhan.</p>
+                    </div>
+                    {% endif %}
+                  </div>
+
+                  <!-- Rekomendasi Per Wilayah -->
+                  <div id="recWilayah">
+                    {% if selected_wilayah %}
+                    {% if wilayah_recommendations %}
+                    <div class="row">
+                    {% for rec in wilayah_recommendations %}
+                    <div class="col-md-12 mb-3">
+                    <div class="card border-0 shadow-sm">
+                      <div class="card-header {% if rec.kategori == 'Tinggi' %}header-tinggi{% elif rec.kategori == 'Sedang' %}header-sedang{% else %}header-rendah{% endif %} py-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                          <h6 class="mb-0" style="font-size: 0.9rem;">
+                            <i class="fas {% if rec.kategori == 'Tinggi' %}fa-check-circle{% elif rec.kategori == 'Sedang' %}fa-exclamation-triangle{% else %}fa-exclamation-circle{% endif %} me-2"></i>
+                            {{ rec.y }}
+                          </h6>
+                          <div>
+                            {% if rec.nilai %}
+                            <span class="badge bg-light text-dark me-1" style="font-size: 0.7rem;">
+                              Nilai: {{ "%.2f"|format(rec.nilai) }}
+                            </span>
+                            {% endif %}
+                            {% if rec.kategori %}
+                            <span class="badge {% if rec.kategori == 'Tinggi' %}bg-success{% elif rec.kategori == 'Sedang' %}bg-warning{% else %}bg-danger{% endif %}" style="font-size: 0.7rem;">
+                              {{ rec.kategori }}
+                            </span>
+                            {% endif %}
+                          </div>
+                        </div>
+                      </div>
+                      <div class="card-body p-3">
+                          {% if rec.improvement_strategies %}
+                          <h6 class="mb-2" style="font-size: 0.85rem; color: black;">
+                            <i class="fas fa-arrow-up me-2"></i>Strategi Peningkatan Prioritas Keseluruhan:
+                          </h6>
+                              <div class="row g-2">
+                                {% for strategy in rec.improvement_strategies[:3] %}
+                                <div class="col-md-4 mb-2">
+                                  <div class="card border-primary h-100 {% if strategy.influence > 0.5 %}card-tinggi{% elif strategy.influence > 0.2 %}card-sedang{% else %}card-rendah{% endif %}">
+                                    <div class="card-header bg-light py-1 px-2">
+                                      <div class="d-flex justify-content-between align-items-center">
+                                        <strong class="text-primary" style="font-size: 0.8rem;">{{ strategy.name }}</strong>
+                                        <span class="badge bg-secondary" style="font-size: 0.65rem;">Skor: {{ "%.2f"|format(strategy.current_score) }}</span>
+                                      </div>
+                                    </div>
+                                    <div class="card-body p-2">
+                                      <p class="mb-1" style="font-size: 0.75rem; line-height: 1.2;">{{ strategy.strategy }}</p>
+                                      <div class="d-flex justify-content-between align-items-center mt-1">
+                                        <small class="text-muted" style="font-size: 0.7rem;">
+                                          <i class="fas fa-chart-line me-1"></i>
+                                          Pengaruh: {{ "%.3f"|format(strategy.influence) }}
+                                        </small>
+                                        <span class="badge {% if strategy.influence > 0.5 %}badge-tinggi{% elif strategy.influence > 0.2 %}badge-sedang{% else %}badge-rendah{% endif %}" style="font-size: 0.65rem;">
+                                          {% if strategy.influence > 0.5 %}Tinggi
+                                          {% elif strategy.influence > 0.2 %}Sedang
+                                          {% else %}Rendah{% endif %}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                                {% endfor %}
+                              </div>
+                          {% else %}
+                          <div class="text-center text-muted py-2">
+                            <i class="fas fa-check-circle fa-lg text-success mb-1"></i>
+                            <p class="mb-0" style="font-size: 0.8rem;">Tidak ada rekomendasi peningkatan khusus untuk wilayah ini.</p>
+                          </div>
+                          {% endif %}
+                        </div>
+                      </div>
+                    </div>
+                    </div>
+                    {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-4">
+                      <i class="fas fa-map-marker-alt fa-2x mb-2"></i>
+                      <p class="mb-0" style="font-size: 0.9rem;">Belum ada rekomendasi spesifik untuk wilayah {{ WILAYAH_MAP.get(selected_wilayah, selected_wilayah) }}.</p>
+                    </div>
+                    {% endif %}
+                    {% else %}
+                    <div class="text-center text-muted py-4">
+                      <i class="fas fa-map-marker-alt fa-2x mb-2"></i>
+                      <p class="mb-0" style="font-size: 0.9rem;">Belum ada rekomendasi untuk kota terpilih.</p>
+                    </div>
+                    {% endif %}
+                  </div>
+
+                </div>
+              </div>
+
+              <!-- INSIGHT ANALYSIS -->
+              <div class="card shadow-lg border-0 mb-3" style="border-radius: 0.75rem; max-width: 1120px; margin: 0 auto;">
+                <div class="card-header text-white py-3" style="background-color: #631040; border-radius: 0.75rem 0.75rem 0 0;">
+                  <h3 class="mb-1" style="font-size: 18px;"><i class="fas fa-lightbulb me-2"></i>Insight Analysis</h3>
+                </div>
+                <div class="card-body">
+                  <div class="row g-2">
+                    {% for insight in insights %}
+                    <div class="col-md-6 mb-2">
+                      <div class="card border-0 bg-light h-100">
+                        <div class="card-body p-2">
+                          <div class="d-flex justify-content-center">
+                            <div class="flex-shrink-0">
+                              <i class="fas fa-chart-line text-primary fa-lg me-2"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                              <p class="mb-0 fw-bold text-dark" style="font-size: 0.8rem; line-height: 1.3;">{{ insight }}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    {% endfor %}
+                  </div>
+                </div>
+                    </div>
+                  </div>
+
+            </div>
+          </div>
+        </div>
+
+      <!-- ============================================-->
+      <!-- <section> begin ============================-->
+      <section class="pb-2 pb-lg-5">
+
+        <div class="container">
+          <div class="row border-top border-top-secondary pt-7">
+            <div class="col-lg-6 col-md-6 mb-4 mb-md-6 mb-lg-0 mb-sm-2 order-1 order-md-1 order-lg-1">
+              <img class="mb-4" src="{{ url_for('static', filename='assets/img/logo.svg') }}" width="184" alt="" />
+              <p class="mb-lg-" style="font-size: 18px;">Departemen Statistika Universitas Brawijaya</p>
+              <ul class="list-unstyled mb-0">
+                <li class="mb-lg-1" style="font-size: 15px;" >Jalan Veteran, Malang, 65145</a></li>
+                <li class="mb-lg-1" style="font-size: 15px;" >Jawa Timur, Indonesia</a></li>
+                <li class="mb-lg-1" style="font-size: 15px;">jurstatub@ub.ac.id</a></li>
+              </ul>
+            </div>
+          </div>
+        </div><!-- end of .container-->
+
+      </section>
+      <!-- <section> close ============================-->
+      <!-- ============================================-->
+
+      <!-- ============================================-->
+      <!-- <section> begin ============================-->
+      <section class="text-center py-0">
+
+        <div class="container">
+          <div class="container border-top py-3">
+            <div class="row justify-content-between">
+              <div class="col-12 col-md-auto">
+                <p class="mb-0">
+                  Made with<span class="fas fa-heart mx-1 text-danger"> </span>by <a class="text-decoration-none ms-1" href="https://statistika.ub.ac.id/" target="_blank">Departemen Statistika Universitas Brawijaya</a></p>
+              </div>
+            </div>
+          </div>
+        </div><!-- end of .container-->
+
+      </section>
+      <!-- <section> close ============================-->
+      <!-- ============================================-->
+
+    </main>
+    <!-- ===============================================-->
+    <!--    End of Main Content-->
+    <!-- ===============================================-->
+
+    <!-- ===============================================-->
+    <!--    JavaScripts-->
+    <!-- ===============================================-->
+    <script src="{{ url_for('static', filename='vendors/@popperjs/popper.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='vendors/bootstrap/bootstrap.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='vendors/is/is.min.js') }}"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=window.scroll"></script>
+    <script src="{{ url_for('static', filename='vendors/fontawesome/all.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='assets/js/theme.js') }}"></script>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", function(){
+        // Peta Hubungan toggle Y
+        const btnY1 = document.getElementById("btnY1");
+        const btnY2 = document.getElementById("btnY2");
+        const btnY3 = document.getElementById("btnY3");
+        const visualizationCardHeader = document.getElementById("visualizationCardHeader");
+
+        // Set initial state based on selected_wilayah
+        let selectedWilayah = false;
+        if(visualizationCardHeader) {
+            selectedWilayah = visualizationCardHeader.getAttribute("data-selected-wilayah") === "true";
+        }
+        if(selectedWilayah) {
+            btnY1.classList.add("active");
+            btnY1.classList.remove("btn-light");
+            btnY1.style.backgroundColor = "#b5195f";
+            btnY1.style.borderColor = "#b5195f";
+            btnY1.style.color = "#F5D2D2";
+        }
+
+        function showPetaHubungan(yKey){
+            document.querySelectorAll(".peta-hubungan-image").forEach(el => {
+                el.classList.add("d-none");
+                el.classList.remove("active");
+            });
+
+            const targetEl = document.getElementById("peta-" + yKey);
+            if(targetEl) {
+                targetEl.classList.remove("d-none");
+                targetEl.classList.add("active");
+            }
+
+            [btnY1, btnY2, btnY3].forEach(btn => {
+                btn.classList.remove("active");
+                btn.classList.add("btn-light");
+                btn.style.backgroundColor = "#FFFFFF";
+                btn.style.borderColor = "#FFFFFF";
+                btn.style.color = "#b5195f";
+            });
+
+            const activeBtn = document.getElementById("btn" + yKey);
+            if(activeBtn) {
+                activeBtn.classList.add("active");
+                activeBtn.classList.remove("btn-light");
+                activeBtn.style.backgroundColor = "#b5195f";
+                activeBtn.style.borderColor = "#b5195f";
+                activeBtn.style.color = "#F5D2D2";
+            }
+        }
+
+        if(btnY1) btnY1.addEventListener("click", () => showPetaHubungan("Y1"));
+        if(btnY2) btnY2.addEventListener("click", () => showPetaHubungan("Y2"));
+        if(btnY3) btnY3.addEventListener("click", () => showPetaHubungan("Y3"));
+
+        // Recommendations toggle
+        const recOverallBtn = document.getElementById("recOverallBtn");
+        const recWilayahBtn = document.getElementById("recWilayahBtn");
+        const recOverall = document.getElementById("recOverall");
+        const recWilayah = document.getElementById("recWilayah");
+
+        function showRecommendation(type) {
+            if(type === 'overall') {
+                recOverall.classList.remove("d-none");
+                recWilayah.classList.add("d-none");
+                [recOverallBtn, recWilayahBtn].forEach(btn => {
+                    btn.classList.remove("active");
+                    btn.classList.add("btn-light");
+                    btn.style.backgroundColor = "#FFFFFF";
+                    btn.style.borderColor = "#FFFFFF";
+                    btn.style.color = "#b5195f";
+                });
+                recOverallBtn.classList.add("active");
+                recOverallBtn.classList.remove("btn-light");
+                recOverallBtn.style.backgroundColor = "#b5195f";
+                recOverallBtn.style.borderColor = "#b5195f";
+                recOverallBtn.style.color = "#f5e5e3";
+            } else {
+                recOverall.classList.add("d-none");
+                recWilayah.classList.remove("d-none");
+                [recOverallBtn, recWilayahBtn].forEach(btn => {
+                    btn.classList.remove("active");
+                    btn.classList.add("btn-light");
+                    btn.style.backgroundColor = "#FFFFFF";
+                    btn.style.borderColor = "#FFFFFF";
+                    btn.style.color = "#b5195f";
+                });
+                recWilayahBtn.classList.add("active");
+                recWilayahBtn.classList.remove("btn-light");
+                recWilayahBtn.style.backgroundColor = "#b5195f";
+                recWilayahBtn.style.borderColor = "#b5195f";
+                recWilayahBtn.style.color = "#f5e5e3";
+            }
+        }
+
+        if(recOverallBtn) recOverallBtn.addEventListener("click", () => showRecommendation('overall'));
+        if(recWilayahBtn) recWilayahBtn.addEventListener("click", () => showRecommendation('wilayah'));
+    });
+    </script>
+  </body>
+
+</html>
