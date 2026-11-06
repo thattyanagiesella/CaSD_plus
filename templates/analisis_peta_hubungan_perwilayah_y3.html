@@ -1,0 +1,60 @@
+{% for rec in wilayah_recommendations if rec.y == "Pemulihan Ekonomi" %}
+<div class="col-md-12 mb-3">
+<div class="card border-0 shadow-sm">
+  <div class="card-header {% if rec.kategori == 'Tinggi' %}header-tinggi{% elif rec.kategori == 'Sedang' %}header-sedang{% else %}header-rendah{% endif %} py-2">
+    <div class="d-flex justify-content-between align-items-center">
+      <h6 class="mb-0" style="font-size: 0.9rem;">
+        <i class="fas {% if rec.kategori == 'Tinggi' %}fa-check-circle{% elif rec.kategori == 'Sedang' %}fa-exclamation-triangle{% else %}fa-exclamation-circle{% endif %} me-2"></i>
+        {{ rec.y }}
+      </h6>
+      <div>
+        {% if rec.nilai %}
+        <span class="badge bg-light text-dark me-1" style="font-size: 0.7rem;">
+          Nilai: {{ "%.2f"|format(rec.nilai) }}
+        </span>
+        {% endif %}
+        {% if rec.kategori %}
+        <span class="badge {% if rec.kategori == 'Tinggi' %}bg-success{% elif rec.kategori == 'Sedang' %}bg-warning{% else %}bg-danger{% endif %}" style="font-size: 0.7rem;">
+          {{ rec.kategori }}
+        </span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="card-body p-3">
+      {% if rec.improvement_strategies %}
+      <h6 class="mb-2" style="font-size: 0.85rem; color: black;">
+        <i class="fas fa-arrow-up me-2"></i>Strategi Peningkatan Prioritas Per Wilayah:
+      </h6>
+          <div class="row g-2">
+            {% for strategy in rec.improvement_strategies[:3] %}
+            <div class="col-md-4 mb-2">
+              <div class="card border-primary h-100 {% if strategy.influence > 0.5 %}card-tinggi{% elif strategy.influence > 0.2 %}card-sedang{% else %}card-rendah{% endif %}">
+                <div class="card-header bg-light py-1 px-2">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <strong class="text-primary" style="font-size: 0.8rem;">{{ strategy.name }}</strong>
+                    <span class="badge bg-secondary" style="font-size: 0.65rem;">Skor: {{ "%.2f"|format(strategy.current_score) }}</span>
+                  </div>
+                </div>
+                <div class="card-body p-2">
+                  <p class="mb-1" style="font-size: 0.75rem; line-height: 1.2;">{{ strategy.strategy }}</p>
+                  <div class="d-flex justify-content-between align-items-center mt-1">
+                    <small class="text-muted" style="font-size: 0.7rem;">
+                      <i class="fas fa-chart-line me-1"></i>
+                      Pengaruh: {{ "%.3f"|format(strategy.influence) }}
+                    </small>
+                    <span class="badge {% if strategy.influence > 0.5 %}badge-tinggi{% elif strategy.influence > 0.2 %}badge-sedang{% else %}badge-rendah{% endif %}" style="font-size: 0.65rem;">
+                      {% if strategy.influence > 0.5 %}Tinggi
+                      {% elif strategy.influence > 0.2 %}Sedang
+                      {% else %}Rendah{% endif %}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+      {% endif %}
+  </div>
+</div>
+</div>

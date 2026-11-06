@@ -1,7 +1,3 @@
-# ============================
-# app.py — REVISI LENGKAP (PART 1/3)
-# ============================
-
 import os
 import io
 import base64
@@ -11,12 +7,10 @@ from datetime import datetime
 from functools import wraps
 from collections import defaultdict
 
-# Use non-interactive matplotlib backend for server
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-# Basic plotting libs
 import networkx as nx
 import seaborn as sns
 
@@ -28,17 +22,10 @@ from flask import (
     send_file, session, jsonify
 )
 
-# ML libs
-from sklearn.cluster import KMeans
-from sklearn.preprocessing import StandardScaler
 
-# MySQL
 import mysql.connector
 from mysql.connector import errorcode
 
-# ---------------------------
-# APP / STORAGE CONFIG
-# ---------------------------
 app = Flask(__name__, template_folder="templates", static_folder="public")
 app.secret_key = os.environ.get("FLASK_SECRET", "super-secret-key")
 
@@ -47,9 +34,6 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs("static/generated", exist_ok=True)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
-# ---------------------------
-# DATABASE CONFIG
-# ---------------------------
 DB_CONFIG = {
     "host": os.environ.get("DB_HOST", "localhost"),
     "user": os.environ.get("DB_USER", "root"),
@@ -59,10 +43,7 @@ DB_CONFIG = {
 }
 DB_TABLE = "responden"
 
-# ---------------------------
-# APP SETTINGS / CONSTANTS
-# ---------------------------
-APP_TITLE = "CaSD (Cashless Society Detector)"
+APP_TITLE = "CaSD+ (Cashless Society Detector)"
 
 WILAYAH_MAP = {
     "1": "Surabaya",
@@ -81,15 +62,25 @@ JENIS_PEKERJAAN_OPTIONS = [
 ]
 
 LIKERT_SCALE = {
-    "STS": 1,
-    "TS": 2,
-    "RAGU-RAGU": 3,
-    "S": 4,
-    "SS": 5
+    "SANGAT TIDAK SETUJU": 1,
+    "TIDAK SETUJU": 2,
+    "NETRAL": 3,
+    "SETUJU": 4,
+    "SANGAT SETUJU": 5
 }
-LIKERT_OPTIONS = ["STS", "TS", "R", "S", "SS"]  # RAGU-RAGU diganti menjadi R
+LIKERT_OPTIONS = ["Sangat Tidak Setuju", "Tidak Setuju", "Netral", "Setuju", "Sangat Setuju"]
 
-X_VAR_NAME = { 
+LIKERT_ALIASES = {
+    "STS": "SANGAT TIDAK SETUJU",
+    "TS": "TIDAK SETUJU",
+    "R": "NETRAL",
+    "N": "NETRAL",
+    "RAGU-RAGU": "NETRAL",
+    "S": "SETUJU",
+    "SS": "SANGAT SETUJU",
+}
+
+X_VAR_NAME = {
     "X1": "Faktor Psikologi",
     "X2": "Faktor Sosial Budaya",
     "X3": "Faktor Pribadi",
@@ -102,137 +93,293 @@ X_VAR_NAME = {
     "X10": "Physical Evidence"
 }
 
-# QUESTIONS (X1..X10) with item weights
+PATH_VAR_NAME = {
+    "Y1": "Digitalisasi Uang Elektronik",
+    "Y2": "Perkembangan Cashless Society",
+    "Y3": "Pemulihan Ekonomi",
+    "M": "Financial Technology",
+    "Y1_M": "Digitalisasi × Financial Technology",
+    "Y2_M": "Cashless Society × Financial Technology",
+}
+
+SCORE_COLUMNS_X = [f"X{i}" for i in range(1, 11)] + ["M"]
+SCORE_COLUMNS_Y_SURVEY = {"Y1": "Y1_survey", "Y2": "Y2_survey", "Y3": "Y3_survey"}
+ALL_SCORE_COLUMNS = SCORE_COLUMNS_X + list(SCORE_COLUMNS_Y_SURVEY.values())
+
 QUESTIONS_DETAILED = {
     "X1": {
         "name": "Faktor Psikologi",
         "items": {
-            "X1.1": {"text": "Saya termotivasi menggunakan mobile banking karena mudah diakses", "weight": 0.3},
-            "X1.2": {"text": "Saya merasa mobile banking mempercepat proses transaksi", "weight": 0.4},
-            "X1.3": {"text": "Saya perlu beradaptasi untuk menggunakan mobile banking dalam transaksi sehari-hari", "weight": 0.3}
+            # Motivasi (X₁.₁)
+            "X1.1": {"text": "Mobile banking digunakan karena dapat mempercepat proses transaksi"},
+            # Persepsi (X₁.₂)
+            "X1.2": {"text": "Mobile banking digunakan karena penggunaannya dianggap mudah"},
+            # Pengetahuan (X₁.₃)
+            "X1.3": {"text": "Adaptasi dirasa perlu dilakukan untuk menggunakan mobile banking dalam transaksi sehari-hari"},
+            # Sikap (X₁.₄)
+            "X1.4": {"text": "Aplikasi mobile banking yang digunakan dirasa merupakan aplikasi yang handal"},
         }
     },
     "X2": {
         "name": "Faktor Sosial Budaya",
         "items": {
-            "X2.1": {"text": "Saya menggunakan mobile banking karena rekomendasi dari teman", "weight": 0.4},
-            "X2.2": {"text": "Saya menggunakan mobile banking karena rekomendasi dari keluarga", "weight": 0.3},
-            "X2.3": {"text": "Saya menggunakan mobile banking karena mengikuti tren masa kini", "weight": 0.3}
+            # Kelompok Acuan (X₂.₁)
+            "X2.1": {"text": "Mobile banking digunakan karena rekomendasi dari teman"},
+            # Keluarga (X₂.₂)
+            "X2.2": {"text": "Mobile banking digunakan karena kebiasaan dari keluarga"},
+            # Peran dan Status (X₂.₃)
+            "X2.3": {"text": "Mobile banking digunakan karena mencerminkan peran yang dijalani di lingkungan kerja/sekolah"},
+            # Budaya (X₂.₄)
+            "X2.4": {"text": "Mobile banking digunakan karena masyarakat sekitar sudah terbiasa menggunakannya"},
+            # Sub Budaya (X₂.₅)
+            "X2.5": {"text": "Mobile banking digunakan karena lebih mudah digunakan di wilayah tempat tinggal"},
+            # Kelas Sosial (X₂.₆)
+            "X2.6": {"text": "Mobile banking digunakan karena mengikuti tren masa kini"},
         }
     },
     "X3": {
         "name": "Faktor Pribadi",
         "items": {
-            "X3.1": {"text": "Saya menggunakan mobile banking karena sesuai dengan kebutuhan di masa sekarang", "weight": 0.4},
-            "X3.2": {"text": "Saya menggunakan mobile banking karena memudahkan aktivitas", "weight": 0.3},
-            "X3.3": {"text": "Saya menggunakan mobile banking untuk memudahkan pengelolaan keuangan", "weight": 0.3}
+            # Usia dan Tahapan Siklus Hidup (X₃.₁)
+            "X3.1": {"text": "Mobile banking digunakan karena sesuai dengan kebutuhan yang dirasakan pada masa sekarang"},
+            # Gaya Hidup (X₃.₂)
+            "X3.2": {"text": "Mobile banking digunakan karena dapat memudahkan aktivitas sehari-hari"},
+            # Kepribadian dan Konsep Diri (X₃.₃)
+            "X3.3": {"text": "Mobile banking digunakan karena sesuai dengan karakter yang menyukai hal-hal praktis"},
         }
     },
     "X4": {
         "name": "Product",
         "items": {
-            "X4.1": {"text": "Mobile banking menawarkan fitur yang lengkap", "weight": 0.5},
-            "X4.2": {"text": "Mobile banking selalu memperbarui fitur secara berkala", "weight": 0.5}
+            # Ketersediaan Macam (X₄.₁)
+            "X4.1": {"text": "Mobile banking disukai untuk digunakan karena tersedia berbagai macam fitur"},
+            # Pembaruan (X₄.₂)
+            "X4.2": {"text": "Mobile banking yang digunakan selalu diperbaharui fitur-fiturnya secara berkala"},
+            # Keandalan Sistem (X4.3)
+            "X4.3": {"text": "Mobile banking yang digunakan dapat diandalkan untuk memproses transaksi dengan lancar dan akurat"},
         }
     },
     "X5": {
         "name": "Price",
         "items": {
-            "X5.1": {"text": "Biaya layanan mobile banking terasa wajar", "weight": 0.6},
-            "X5.2": {"text": "Mobile banking menawarkan biaya yang kompetitif", "weight": 0.4}
+            # Kesesuaian Harga (X₅.₁)
+            "X5.1": {"text": "Biaya layanan mobile banking dirasa sudah sesuai dengan kemudahan transaksi yang dirasakan"},
+            # Perbandingan Harga (X₅.₂)
+            "X5.2": {"text": "Mobile banking yang digunakan dirasa menawarkan biaya yang lebih murah daripada mobile banking dari kompetitor lain"},
         }
     },
     "X6": {
         "name": "Promotion",
         "items": {
-            "X6.1": {"text": "Promosi mobile banking menarik perhatian saya", "weight": 0.5},
-            "X6.2": {"text": "Mobile banking memberikan reward yang menarik", "weight": 0.5}
+            # Sponsorship (X₆.₁)
+            "X6.1": {"text": "Mobile banking yang digunakan secara rutin melakukan sponsorship pada event tertentu"},
+            # Media (X₆.₂)
+            "X6.2": {"text": "Mobile banking yang digunakan dirasa hampir selalu menggunakan media sosial untuk melakukan promosi"},
+            # Tawaran yang Diberikan (X₆.₃)
+            "X6.3": {"text": "Mobile banking yang digunakan dirasa hampir selalu memberikan reward pada nasabah"},
         }
     },
     "X7": {
         "name": "Place",
         "items": {
-            "X7.1": {"text": "Lokasi kantor bank mudah diakses", "weight": 0.5},
-            "X7.2": {"text": "Saya merasa nyaman menggunakan mobile banking", "weight": 0.5}
+            # Letak (X₇.₁)
+            "X7.1": {"text": "Lokasi kantor untuk melakukan aktivasi mobile banking dirasa mudah diakses"},
+            # Suasana (X₇.₂)
+            "X7.2": {"text": "Kenyamanan dirasakan saat melakukan transaksi menggunakan mobile banking"},
         }
     },
     "X8": {
         "name": "People",
         "items": {
-            "X8.1": {"text": "Customer service mobile banking responsif", "weight": 0.5},
-            "X8.2": {"text": "Customer service memberikan informasi yang jelas", "weight": 0.5}
+            # Kinerja (X₈.₁)
+            "X8.1": {"text": "Keluhan pada aplikasi ditanggapi dengan cepat oleh customer service"},
+            # Sikap (X₈.₂)
+            "X8.2": {"text": "Kepedulian tinggi dirasa dimiliki oleh customer service saat melayani pengguna mobile banking"},
         }
     },
     "X9": {
         "name": "Process",
         "items": {
-            "X9.1": {"text": "Proses pendaftaran mobile banking mudah", "weight": 0.4},
-            "X9.2": {"text": "Proses transaksi mobile banking cepat dan aman", "weight": 0.6}
+            # Arus Kegiatan (X₉.₁)
+            "X9.1": {"text": "Prosedur pembukaan akun/aktivasi mobile banking dirasa mudah"},
+            # Langkah Proses (X₉.₂)
+            "X9.2": {"text": "Proses layanan transaksi melalui mobile banking dirasa lebih efektif"},
+            # Penyelesaian Proses (X9.3)
+            "X9.3": {"text": "Setelah melakukan transaksi melalui mobile banking, terdapat konfirmasi atau bukti transaksi yang jelas"},
         }
     },
     "X10": {
         "name": "Physical Evidence",
         "items": {
-            "X10.1": {"text": "Tampilan aplikasi mobile banking menarik", "weight": 0.4},
-            "X10.2": {"text": "Fitur mobile banking mudah digunakan", "weight": 0.6}
+            # Tampilan (X10.1)
+            "X10.1": {"text": "Tampilan dari aplikasi mobile banking dinilai menarik dan mudah untuk digunakan"},
+            # Fasilitas (X10.2)
+            "X10.2": {"text": "Fitur yang tersedia di mobile banking dirasa membuat nasabah nyaman dan aman dalam melakukan transaksi"},
         }
-    }
+    },
+    "Y1": {
+        "name": "Digitalisasi Uang Elektronik",
+        "items": {
+            # Convenience (Y1.1)
+            "Y1.1": {"text": "Penggunaan mobile banking dirasa mudah dipelajari"},
+            # Complementarity (Y1.2)
+            "Y1.2": {"text": "Mobile banking dinilai sudah sesuai dengan tingkat pertumbuhan ekonomi saat ini"},
+            # Network Effects (Y1.3)
+            "Y1.3": {"text": "Mobile banking diinginkan untuk digunakan ketika ada pilihan untuk melakukan transaksi tunai atau nontunai"},
+            # Security (Y1.4)
+            "Y1.4": {"text": "Responden merasa aman ketika bertransaksi dengan menggunakan aplikasi mobile banking"},
+            # Regulation (Y1.5)
+            "Y1.5": {"text": "Responden melihat bahwa dengan berbelanja menggunakan mobile banking dapat melindungi responden"},
+            # Trust (Y1.6)
+            "Y1.6": {"text": "Responden lebih percaya ketika berbelanja dengan menggunakan mobile banking"},
+        }
+    },
+    "Y2": {
+        "name": "Perkembangan Cashless Society",
+        "items": {
+            # Akselerasi Pembayaran Digital (Y₂.₁)
+            "Y2.1": {"text": "Penggunaan mobile banking dirasa sudah diterapkan di berbagai transaksi"},
+            # Kemudahan Transaksi (Y₂.₂)
+            "Y2.2": {"text": "Sistem transaksi yang dilakukan dengan mobile banking dirasa jelas dan mudah dimengerti"},
+        }
+    },
+    "M": {
+        "name": "Financial Technology",
+        "items": {
+            # Pembayaran (M₁)
+            "M1": {"text": "Perkembangan sistem pembayaran digital pada semua bank dirasa berkembang cepat"},
+            # Layanan Konsultasi (M₂)
+            "M2": {"text": "Layanan konsultasi aktivasi mobile banking hampir selalu didengar dilakukan secara online"},
+            # Kepatuhan (M₃)
+            "M3": {"text": "Gaya hidup yang lebih hemat dirasa dimiliki karena adanya kepatuhan penerapan budget pada aplikasi"},
+            # Kepuasan (M₄)
+            "M4": {"text": "Responden merasa puas dalam membayar dengan menggunakan pembayaran digital"},
+        }
+    },
+    "Y3": {
+        "name": "Pemulihan Ekonomi",
+        "items": {
+            # Kolaborasi Bisnis dan Teknologi (Y3.1)
+            "Y3.1": {"text": "Pengguna terbiasa dengan pemanfaatan teknologi dalam bisnis"},
+            # Pemberdayaan pelaku UMKM (Y3.2)
+            "Y3.2": {"text": "Pelaku UMKM diarahkan untuk mengikuti perkembangan ekonomi digital untuk mendukung pemberdayaan UMKM"},
+            # Pertumbuhan Ekonomi (Y3.3)
+            "Y3.3": {"text": "Pertumbuhan ekonomi meningkat ketika mulai banyak masyarakat melakukan transaksi dengan sistem cashless"},
+        }
+    },
 }
 
-# SEM Coefficients per wilayah
 SEM_COEFFS = {
+    "1": {  # Wilayah A
+        "Y1": {"X1": 0.328, "X2": 0.123, "X3": 0.198, "X4": 0.324, "X5": 0.264, "X6": 0.394, "X7": 0.579, "X8": 0.554, "X9": 0.345, "X10": 0.588},
+        "Y2": {"X1": 0.482, "X2": -0.04, "X3": 0.573, "X4": 0.254, "X5": 0.341, "X6": 0.421, "X7": 0.347, "X8": 0.476, "X9": 0.159, "X10": 0.3, "Y1": 0.222},
+        "Y3": {"Y1": 0.343, "Y2": 0.219, "M": 0.256, "Y1_M": 0.129, "Y2_M": 0.281},
+    },
+    "2": {  # Wilayah B
+        "Y1": {"X1": 0.194, "X2": 0.189, "X3": 0.319, "X4": 0.21, "X5": 0.539, "X6": 0.41, "X7": 0.355, "X8": 0.461, "X9": 0.473, "X10": 0.574},
+        "Y2": {"X1": 0.199, "X2": 0.144, "X3": 0.386, "X4": 0.14, "X5": 0.459, "X6": 0.33, "X7": 0.437, "X8": -0.04, "X9": 0.25, "X10": 0.208, "Y1": 0.566},
+        "Y3": {"Y1": 0.441, "Y2": 0.193, "M": 0.34, "Y1_M": 0.094, "Y2_M": 0.28},
+    },
+    "3": {  # Wilayah C
+        "Y1": {"X1": 0.284, "X2": 0.42, "X3": 0.279, "X4": 0.261, "X5": 0.457, "X6": 0.389, "X7": 0.905, "X8": 0.385, "X9": 0.596, "X10": 0.705},
+        "Y2": {"X1": 0.274, "X2": 0.496, "X3": 0.643, "X4": 0.224, "X5": 0.547, "X6": 0.349, "X7": 0.569, "X8": 0.319, "X9": 0.344, "X10": 0.39, "Y1": 0.16},
+        "Y3": {"Y1": 0.192, "Y2": 0.385, "M": 0.168, "Y1_M": 0.239, "Y2_M": 0.17},
+    },
+    "4": {  # Wilayah D
+        "Y1": {"X1": 0.194, "X2": 0.248, "X3": 0.194, "X4": 0.321, "X5": 0.329, "X6": 0.425, "X7": 0.335, "X8": 0.564, "X9": 0.454, "X10": 0.518},
+        "Y2": {"X1": 0.419, "X2": 0.361, "X3": 0.319, "X4": 0.323, "X5": 0.282, "X6": 0.586, "X7": 0.038, "X8": 0.431, "X9": 0.138, "X10": 0.426, "Y1": 0.176},
+        "Y3": {"Y1": 0.281, "Y2": 0.251, "M": 0.176, "Y1_M": 0.141, "Y2_M": 0.303},
+    },
+    "5": {  # Wilayah E
+        "Y1": {"X1": 0.159, "X2": 0.208, "X3": 0.216, "X4": 0.051, "X5": 0.429, "X6": 0.403, "X7": 0.481, "X8": 0.674, "X9": 0.503, "X10": 0.728},
+        "Y2": {"X1": 0.141, "X2": 0.588, "X3": 0.157, "X4": 0.441, "X5": 0.327, "X6": 0.126, "X7": 0.104, "X8": 0.241, "X9": 0.024, "X10": 0.337, "Y1": 0.475},
+        "Y3": {"Y1": 0.338, "Y2": 0.321, "M": 0.229, "Y1_M": 0.174, "Y2_M": 0.225},
+    },
+}
+
+ITEM_LOADING = {
     "1": {
-        "Y1": {"X1": 0.369, "X2": 0.226, "X3": 0.100, "X4": 0.144, "X5": 0.072, "X6": 0.092, "X7": 0.184, "X8": 0.199, "X9": -0.028, "X10": -0.022},
-        "Y2": {"X1": -0.104, "X2": -0.115, "X3": 0.282, "X4": 0.110, "X5": 0.121, "X6": 0.194, "X7": -0.010, "X8": 0.137, "X9": 0.106, "X10": 0.115, "Y1": 0.057},
-        "Y3": {"Y1": 0.200, "Y2": 0.146}
+        "X1.1": 0.2579, "X1.2": 0.2426, "X1.3": 0.2541, "X1.4": 0.2454, "X2.1": 0.1758,
+        "X2.2": 0.1698, "X2.3": 0.1661, "X2.4": 0.1704, "X2.5": 0.163, "X2.6": 0.1549,
+        "X3.1": 0.333, "X3.2": 0.3485, "X3.3": 0.3185, "X4.1": 0.3459, "X4.2": 0.3418,
+        "X4.3": 0.3123, "X5.1": 0.5276, "X5.2": 0.4724, "X6.1": 0.3359, "X6.2": 0.3544,
+        "X6.3": 0.3097, "X7.1": 0.4401, "X7.2": 0.5599, "X8.1": 0.4814, "X8.2": 0.5186,
+        "X9.1": 0.3084, "X9.2": 0.3595, "X9.3": 0.3321, "X10.1": 0.5302, "X10.2": 0.4698,
+        "Y1.1": 0.1675, "Y1.2": 0.1614, "Y1.3": 0.1724, "Y1.4": 0.1562, "Y1.5": 0.1755,
+        "Y1.6": 0.1669, "Y2.1": 0.5061, "Y2.2": 0.4939, "Y3.1": 0.3231, "Y3.2": 0.3304,
+        "Y3.3": 0.3465, "M1": 0.2267, "M2": 0.2596, "M3": 0.2565, "M4": 0.2572,
     },
     "2": {
-        "Y1": {"X1": 0.054, "X2": 0.234, "X3": 0.089, "X4": 0.128, "X5": 0.292, "X6": 0.080, "X7": 0.055, "X8": 0.009, "X9": 0.162, "X10": -0.198},
-        "Y2": {"X1": 0.227, "X2": -0.110, "X3": -0.084, "X4": 0.157, "X5": 0.063, "X6": 0.135, "X7": 0.067, "X8": -0.080, "X9": 0.011, "X10": -0.038, "Y1": 0.187},
-        "Y3": {"Y1": 0.146, "Y2": 0.141}
+        "X1.1": 0.2549, "X1.2": 0.2379, "X1.3": 0.2473, "X1.4": 0.2599, "X2.1": 0.178,
+        "X2.2": 0.1764, "X2.3": 0.1665, "X2.4": 0.1761, "X2.5": 0.1659, "X2.6": 0.137,
+        "X3.1": 0.3239, "X3.2": 0.3642, "X3.3": 0.3119, "X4.1": 0.3548, "X4.2": 0.342,
+        "X4.3": 0.3031, "X5.1": 0.4716, "X5.2": 0.5284, "X6.1": 0.3167, "X6.2": 0.3622,
+        "X6.3": 0.321, "X7.1": 0.4615, "X7.2": 0.5385, "X8.1": 0.3891, "X8.2": 0.6109,
+        "X9.1": 0.3249, "X9.2": 0.2948, "X9.3": 0.3803, "X10.1": 0.4536, "X10.2": 0.5464,
+        "Y1.1": 0.1577, "Y1.2": 0.175, "Y1.3": 0.1717, "Y1.4": 0.1555, "Y1.5": 0.1698,
+        "Y1.6": 0.1703, "Y2.1": 0.5028, "Y2.2": 0.4972, "Y3.1": 0.3332, "Y3.2": 0.3309,
+        "Y3.3": 0.3359, "M1": 0.2283, "M2": 0.254, "M3": 0.2678, "M4": 0.25,
     },
     "3": {
-        "Y1": {"X1": -0.025, "X2": 0.076, "X3": 0.134, "X4": 0.110, "X5": 0.030, "X6": 0.200, "X7": 0.159, "X8": 0.113, "X9": -0.211, "X10": 0.148},
-        "Y2": {"X1": 0.111, "X2": 0.108, "X3": 0.174, "X4": -0.100, "X5": 0.169, "X6": 0.224, "X7": 0.112, "X8": 0.068, "X9": 0.190, "X10": 0.010, "Y1": 0.110},
-        "Y3": {"Y1": 0.245, "Y2": 0.229}
+        "X1.1": 0.2535, "X1.2": 0.2735, "X1.3": 0.2518, "X1.4": 0.2213, "X2.1": 0.1685,
+        "X2.2": 0.1694, "X2.3": 0.1699, "X2.4": 0.1641, "X2.5": 0.1554, "X2.6": 0.1727,
+        "X3.1": 0.3438, "X3.2": 0.3293, "X3.3": 0.3269, "X4.1": 0.3437, "X4.2": 0.3452,
+        "X4.3": 0.3111, "X5.1": 0.5255, "X5.2": 0.4745, "X6.1": 0.3316, "X6.2": 0.3292,
+        "X6.3": 0.3393, "X7.1": 0.4715, "X7.2": 0.5285, "X8.1": 0.5397, "X8.2": 0.4603,
+        "X9.1": 0.3314, "X9.2": 0.3541, "X9.3": 0.3144, "X10.1": 0.5008, "X10.2": 0.4992,
+        "Y1.1": 0.1767, "Y1.2": 0.1616, "Y1.3": 0.1645, "Y1.4": 0.1603, "Y1.5": 0.1709,
+        "Y1.6": 0.166, "Y2.1": 0.4872, "Y2.2": 0.5128, "Y3.1": 0.3335, "Y3.2": 0.3478,
+        "Y3.3": 0.3187, "M1": 0.277, "M2": 0.2333, "M3": 0.2386, "M4": 0.2511,
     },
     "4": {
-        "Y1": {"X1": 0.032, "X2": 0.182, "X3": -0.074, "X4": 0.345, "X5": 0.092, "X6": 0.033, "X7": -0.051, "X8": 0.121, "X9": 0.176, "X10": -0.116},
-        "Y2": {"X1": -0.199, "X2": -0.149, "X3": 0.047, "X4": -0.067, "X5": -0.061, "X6": 0.102, "X7": 0.274, "X8": 0.224, "X9": 0.020, "X10": 0.352, "Y1": 0.021},
-        "Y3": {"Y1": 0.230, "Y2": 0.035}
+        "X1.1": 0.2696, "X1.2": 0.2504, "X1.3": 0.2397, "X1.4": 0.2402, "X2.1": 0.1828,
+        "X2.2": 0.1708, "X2.3": 0.1685, "X2.4": 0.1639, "X2.5": 0.1603, "X2.6": 0.1537,
+        "X3.1": 0.3234, "X3.2": 0.3096, "X3.3": 0.367, "X4.1": 0.3425, "X4.2": 0.339,
+        "X4.3": 0.3185, "X5.1": 0.4501, "X5.2": 0.5499, "X6.1": 0.3231, "X6.2": 0.3579,
+        "X6.3": 0.319, "X7.1": 0.5901, "X7.2": 0.4099, "X8.1": 0.5087, "X8.2": 0.4913,
+        "X9.1": 0.3562, "X9.2": 0.34, "X9.3": 0.3037, "X10.1": 0.5115, "X10.2": 0.4885,
+        "Y1.1": 0.1719, "Y1.2": 0.1711, "Y1.3": 0.1659, "Y1.4": 0.1639, "Y1.5": 0.167,
+        "Y1.6": 0.1602, "Y2.1": 0.4937, "Y2.2": 0.5063, "Y3.1": 0.3215, "Y3.2": 0.3456,
+        "Y3.3": 0.3329, "M1": 0.2722, "M2": 0.2279, "M3": 0.2641, "M4": 0.2358,
     },
     "5": {
-        "Y1": {"X1": -0.019, "X2": 0.055, "X3": 0.332, "X4": 0.130, "X5": 0.147, "X6": 0.142, "X7": 0.022, "X8": 0.178, "X9": 0.181, "X10": 0.110},
-        "Y2": {"X1": 0.010, "X2": -0.043, "X3": 0.143, "X4": 0.168, "X5": 0.094, "X6": 0.178, "X7": 0.053, "X8": 0.100, "X9": 0.087, "X10": 0.153, "Y1": 0.045},
-        "Y3": {"Y1": 0.335, "Y2": 0.287}
-    }
+        "X1.1": 0.2389, "X1.2": 0.2402, "X1.3": 0.2706, "X1.4": 0.2503, "X2.1": 0.1776,
+        "X2.2": 0.1538, "X2.3": 0.1658, "X2.4": 0.1712, "X2.5": 0.1589, "X2.6": 0.1726,
+        "X3.1": 0.3717, "X3.2": 0.2854, "X3.3": 0.3429, "X4.1": 0.3155, "X4.2": 0.3337,
+        "X4.3": 0.3508, "X5.1": 0.4431, "X5.2": 0.5569, "X6.1": 0.3833, "X6.2": 0.3256,
+        "X6.3": 0.291, "X7.1": 0.5125, "X7.2": 0.4875, "X8.1": 0.4728, "X8.2": 0.5272,
+        "X9.1": 0.3372, "X9.2": 0.3577, "X9.3": 0.3051, "X10.1": 0.4311, "X10.2": 0.5689,
+        "Y1.1": 0.165, "Y1.2": 0.1515, "Y1.3": 0.1774, "Y1.4": 0.1661, "Y1.5": 0.1649,
+        "Y1.6": 0.175, "Y2.1": 0.5013, "Y2.2": 0.4987, "Y3.1": 0.3328, "Y3.2": 0.3234,
+        "Y3.3": 0.3438, "M1": 0.2503, "M2": 0.243, "M3": 0.2582, "M4": 0.2485,
+    },
 }
 
-# Global runtime storage
-global_clusters = {}
-global_models = {}
+SEM_MEANS = {
+    "1": {"X1": 3.0525, "X2": 2.95, "X3": 3.0983, "X4": 2.975, "X5": 2.9675, "X6": 3.0683, "X7": 2.93, "X8": 2.9375, "X9": 2.9217, "X10": 3.0225, "Y1": 3.0058, "Y2": 3.1175, "Y3": 3.0183, "M": 2.9987},
+    "2": {"X1": 2.9863, "X2": 2.9867, "X3": 3.0067, "X4": 2.9383, "X5": 3.1275, "X6": 2.9217, "X7": 2.94, "X8": 3.0275, "X9": 3.0133, "X10": 3.005, "Y1": 2.9433, "Y2": 2.97, "Y3": 2.9667, "M": 3.0412},
+    "3": {"X1": 3.0537, "X2": 3.0667, "X3": 3.0267, "X4": 3.03, "X5": 3.09, "X6": 3.0433, "X7": 2.95, "X8": 3.0625, "X9": 2.93, "X10": 3.07, "Y1": 3.0817, "Y2": 2.9375, "Y3": 3.0567, "M": 3.0587},
+    "4": {"X1": 2.9525, "X2": 3.0633, "X3": 3.0433, "X4": 3.1067, "X5": 3.0125, "X6": 3.0983, "X7": 3.03, "X8": 3.09, "X9": 3.0283, "X10": 2.97, "Y1": 3.0617, "Y2": 3.0475, "Y3": 3.0683, "M": 2.9813},
+    "5": {"X1": 3.0725, "X2": 3.0242, "X3": 3.01, "X4": 2.99, "X5": 3.0375, "X6": 3.0167, "X7": 2.9975, "X8": 3.0125, "X9": 2.9367, "X10": 2.9825, "Y1": 3.0067, "Y2": 2.9475, "Y3": 2.9433, "M": 3.015},
+}
 
-# ---------------------------
-# UTIL FUNCTIONS
-# ---------------------------
+SEM_CENTER = {"Y1": 3.0198, "Y2": 3.004, "M": 3.019}
+
 def map_answer_to_weight(ans):
     """Map jawaban ke angka; toleran terhadap format input."""
     if ans is None:
         return 0
     key = str(ans).strip().upper()
-    if key in ("N", "R"):  # Tambahkan mapping untuk "R"
-        key = "RAGU-RAGU"
+    key = LIKERT_ALIASES.get(key, key)
     return LIKERT_SCALE.get(key, 0)
 
-def calculate_weighted_scores(answers):
-    """
-    Dari jawaban per item (dictionary item_code -> numeric), hitung skor per X (X1..X10)
-    menggunakan bobot tiap item. Mengembalikan (weighted_scores, item_scores_detail).
-    """
+def calculate_weighted_scores(answers, wilayah_id=None):
     weighted_scores = {}
     item_scores = {}
     if not answers:
         return {}, {}
+
+    wilayah_weights = ITEM_LOADING.get(str(wilayah_id), {})
 
     for var, data in QUESTIONS_DETAILED.items():
         total_score = 0.0
@@ -242,7 +389,7 @@ def calculate_weighted_scores(answers):
             score = answers.get(item_code, 0)
             if score is None:
                 score = 0
-            weight = float(item_data.get("weight", 1))
+            weight = float(wilayah_weights.get(item_code, item_data.get("weight", 1)))
             total_score += float(score) * weight
             total_weight += weight
             item_scores[var][item_code] = {
@@ -255,55 +402,50 @@ def calculate_weighted_scores(answers):
     return weighted_scores, item_scores
 
 def calculate_sem_scores(x_scores, wilayah_id):
-    """
-    Hitung Y1,Y2,Y3 berdasarkan SEM_COEFFS wilayah.
-    Hasil dinormalisasi ke range ~ [1,5] agar konsisten dengan skala likert.
-    """
     if not x_scores:
         return {"Y1": 3.0, "Y2": 3.0, "Y3": 3.0}
 
     try:
         wid = str(wilayah_id)
-        coeffs = SEM_COEFFS.get(wid, {})
+        coeffs = SEM_COEFFS.get(wid)
+        means = SEM_MEANS.get(wid)
+        if not coeffs or not means:
+            return {"Y1": 3.0, "Y2": 3.0, "Y3": 3.0}
+
+        def val(var):
+            v = x_scores.get(var)
+            return float(means[var] if v is None else v)
 
         # Y1
-        y1_raw = 0.0
-        for x_var, coef in coeffs.get("Y1", {}).items():
-            if x_var.startswith("X"):
-                y1_raw += coef * float(x_scores.get(x_var, 0) or 0)
+        y1 = means["Y1"]
+        for var, coef in coeffs.get("Y1", {}).items():
+            y1 += coef * (val(var) - means[var])
 
-        # Y2 (memperhitungkan Y1 jika coefficient ada)
-        y2_raw = 0.0
+        y2 = means["Y2"]
         for var, coef in coeffs.get("Y2", {}).items():
             if var == "Y1":
-                y2_raw += coef * y1_raw
-            elif var.startswith("X"):
-                y2_raw += coef * float(x_scores.get(var, 0) or 0)
+                y2 += coef * (y1 - means["Y1"])
+            else:
+                y2 += coef * (val(var) - means[var])
 
-        # Y3
-        y3_raw = 0.0
-        for var, coef in coeffs.get("Y3", {}).items():
-            if var == "Y1":
-                y3_raw += coef * y1_raw
-            elif var == "Y2":
-                y3_raw += coef * y2_raw
+        # Y3 (jalur Y1, Y2, M, serta moderasi Y1xM dan Y2xM)
+        y1c = y1 - SEM_CENTER["Y1"]
+        y2c = y2 - SEM_CENTER["Y2"]
+        mc = val("M") - SEM_CENTER["M"]
+        c3 = coeffs.get("Y3", {})
+        y3 = (
+            means["Y3"]
+            + c3.get("Y1", 0.0) * y1c
+            + c3.get("Y2", 0.0) * y2c
+            + c3.get("M", 0.0) * mc
+            + c3.get("Y1_M", 0.0) * (y1c * mc)
+            + c3.get("Y2_M", 0.0) * (y2c * mc)
+        )
 
-        # Normalisasi: gunakan sum(abs(coef))*max_score sebagai pembagi
-        def normalize(raw, coef_map):
-            if not coef_map:
-                return 3.0
-            denom = sum(abs(c) for c in coef_map.values()) * 5.0
-            if denom == 0:
-                return 3.0
-            # scale raw/denom to [1,5] with center at 3
-            scaled = 1.0 + (raw / denom) * 4.0
-            return round(max(1.0, min(5.0, scaled)), 2)
+        def clip(v):
+            return round(max(1.0, min(5.0, v)), 2)
 
-        y1 = normalize(y1_raw, coeffs.get("Y1", {}))
-        y2 = normalize(y2_raw, coeffs.get("Y2", {}))
-        y3 = normalize(y3_raw, coeffs.get("Y3", {}))
-
-        return {"Y1": y1, "Y2": y2, "Y3": y3}
+        return {"Y1": clip(y1), "Y2": clip(y2), "Y3": clip(y3)}
 
     except Exception as e:
         print("Error calculate_sem_scores:", e)
@@ -311,7 +453,6 @@ def calculate_sem_scores(x_scores, wilayah_id):
         return {"Y1": 3.0, "Y2": 3.0, "Y3": 3.0}
 
 def score_to_category(score):
-    """Konversi skor numeric ke kategori: Rendah (<2.5), Sedang [2.5-3.5), Tinggi >=3.5"""
     try:
         s = float(score)
         if s >= 3.5:
@@ -323,15 +464,7 @@ def score_to_category(score):
     except Exception:
         return "Rendah"
 
-# ============================
-# app.py — REVISI LENGKAP (PART 2/3)
-# ============================
-
 def analyze_variable_influences(x_scores, wilayah_id, sem_scores):
-    """
-    Hitung pengaruh tiap variabel X terhadap Y berdasarkan koefisien SEM.
-    Mengembalikan struktur terurut (by absolute influence).
-    """
     wid = str(wilayah_id)
     coeffs = SEM_COEFFS.get(wid, {})
     results = {}
@@ -341,7 +474,7 @@ def analyze_variable_influences(x_scores, wilayah_id, sem_scores):
         y_coeffs = coeffs.get(y_key, {})
         influences = []
         for var, coef in y_coeffs.items():
-            if var.startswith("X"):
+            if var.startswith("X") or var == "M":
                 sc = float(x_scores.get(var, 0) or 0)
                 inf = float(coef) * sc
                 influences.append({
@@ -372,7 +505,6 @@ def analyze_variable_influences(x_scores, wilayah_id, sem_scores):
                     "influence": inf
                 })
 
-        # combine by variable (sum influences)
         combined = {}
         for inf in influences:
             v = inf["variable"]
@@ -393,7 +525,6 @@ def analyze_variable_influences(x_scores, wilayah_id, sem_scores):
         combined_list = list(combined.values())
         combined_list.sort(key=lambda x: abs(x["total_influence"]), reverse=True)
 
-        # recommendation: pick positive influences sorted by (influence, -score)
         positive = [c for c in combined_list if c["total_influence"] > 0]
         positive.sort(key=lambda x: (x["total_influence"], -x["current_score"]), reverse=True)
         recommendation_3 = positive[:3] if len(positive) >= 3 else positive
@@ -421,7 +552,7 @@ def generate_pekerjaan_avg_chart(stats_pekerjaan):
         for p in stats_pekerjaan:
             nm = p['jenis_pekerjaan']
             if len(nm) > 25:
-                nm = nm.replace("/", "/\n")  # Auto wrap
+                nm = nm.replace("/", "/\n") 
             names.append(nm)
 
             y1.append(float(p.get('avg_Y1') or 0))
@@ -444,7 +575,6 @@ def generate_pekerjaan_avg_chart(stats_pekerjaan):
         ax.set_title("Rata-rata Skor per Jenis Pekerjaan", fontsize=16, fontweight='bold')
         ax.legend()
 
-        # Tambah angka di atas bar
         def add_values(bars):
             for bar in bars:
                 h = bar.get_height()
@@ -484,7 +614,6 @@ def generate_overall_bar_chart(overall_stats):
         fig, ax = plt.subplots(figsize=(8, 6))
         bars = ax.bar(labels, values, color=["#3E8EDE", "#FF7F00", "#34A853"])
 
-        # Tambahkan label nilai di atas bar
         for bar in bars:
             height = bar.get_height()
             ax.text(
@@ -515,66 +644,60 @@ def generate_overall_bar_chart(overall_stats):
 
 
 def generate_pekerjaan_pie_chart(stats_pekerjaan):
-    """Pie chart yang diperbaiki agar tidak kepotong"""
+    """Pie chart versi aman supaya label/teks tidak kepotong."""
     try:
         if not stats_pekerjaan:
             return None
-        
+
         labels = []
         sizes = []
-
         for p in stats_pekerjaan:
-            nm = p['jenis_pekerjaan']
-            # Potong teks yang terlalu panjang
+            nm = str(p.get('jenis_pekerjaan', ''))
             if len(nm) > 25:
                 nm = nm[:22] + "..."
             labels.append(nm)
-            sizes.append(p['count'])
+            sizes.append(int(p.get('count', 0) or 0))
 
-        # Ukuran figure lebih kecil
-        fig, ax = plt.subplots(figsize=(10, 8))
-        
-        # Warna yang lebih baik
-        colors = plt.cm.Set3(np.linspace(0, 1, len(labels)))
-        
-        # Buat pie chart dengan parameter yang diperbaiki
+        banyak = len(labels)
+        tampil_label_dari_pie = banyak <= 5
+
+        fig, ax = plt.subplots(figsize=(12, 9))
+        colors = plt.cm.Set3(np.linspace(0, 1, max(1, len(labels))))
+
         wedges, texts, autotexts = ax.pie(
             sizes,
-            labels=labels,
+            labels=labels if tampil_label_dari_pie else ['' for _ in labels],
             autopct='%1.1f%%',
             startangle=90,
             colors=colors,
             wedgeprops={'edgecolor': 'w', 'linewidth': 1},
-            textprops={'fontsize': 10, 'weight': 'normal'},  # Font lebih kecil
+            textprops={'fontsize': 9, 'weight': 'normal'},
             pctdistance=0.85,
-            labeldistance=1.05  # Jarak label dari pie
+            labeldistance=1.07
         )
 
-        # Atur autotext (persentase)
         plt.setp(autotexts, size=9, weight="bold", color="black")
-        
-        # Title
-        ax.set_title("Sebaran Jenis Pekerjaan", fontsize=14, fontweight='bold', pad=20)
-        
-        # Equal aspect ratio
+        ax.set_title("Sebaran Jenis Pekerjaan", fontsize=14, fontweight='bold', pad=18)
         ax.axis('equal')
 
-        # Tambahkan legend di luar pie chart jika terlalu banyak item
-        if len(labels) > 5:
-            ax.legend(wedges, labels,
-                     title="Jenis Pekerjaan",
-                     loc="center left",
-                     bbox_to_anchor=(1, 0, 0.5, 1),
-                     fontsize=9)
-            # Hapus labels langsung dari pie
-            for text in texts:
-                text.set_text('')
+        if not tampil_label_dari_pie:
+            ax.legend(
+                wedges,
+                labels,
+                title="Jenis Pekerjaan",
+                loc="center left",
+                bbox_to_anchor=(1.02, 0.5),
+                fontsize=9,
+                title_fontsize=10
+            )
 
-        # Adjust layout
-        plt.tight_layout()
+        try:
+            fig.tight_layout()
+        except Exception:
+            pass
 
         buf = io.BytesIO()
-        plt.savefig(buf, format='png', dpi=150, bbox_inches='tight')
+        plt.savefig(buf, format='png', dpi=160, bbox_inches='tight', pad_inches=0.25, facecolor='white')
         buf.seek(0)
         out = base64.b64encode(buf.getvalue()).decode('utf-8')
         plt.close(fig)
@@ -586,7 +709,6 @@ def generate_pekerjaan_pie_chart(stats_pekerjaan):
 
 
 def generate_distribution_chart(stats_wilayah):
-    """Generate bar chart untuk distribusi kategori per wilayah"""
     try:
         if not stats_wilayah:
             return None
@@ -631,7 +753,6 @@ def generate_distribution_chart(stats_wilayah):
         return None
 
 def generate_improvement_recommendations(analysis_results, sem_scores, mode="detail", consolidated=False):
-    """Generate rekomendasi peningkatan berdasarkan analisis pengaruh variabel"""
     if consolidated:
         recommendations = []
         for y_key in ["Y1", "Y2", "Y3"]:
@@ -672,7 +793,6 @@ def generate_improvement_recommendations(analysis_results, sem_scores, mode="det
         y_name = y_data.get("name", y_key)
         y_score = sem_scores.get(y_key, 0)
 
-        # Ambil 3 variabel positif dengan pengaruh tertinggi
         positive_influences = [
             inf for inf in y_data.get("all_influences", [])
             if inf["total_influence"] > 0
@@ -680,7 +800,6 @@ def generate_improvement_recommendations(analysis_results, sem_scores, mode="det
         positive_influences.sort(key=lambda x: x["total_influence"], reverse=True)
         top_3_positive = positive_influences[:3]
 
-        # Generate rekomendasi berdasarkan mode
         improvement_strategies = []
         short_recommendations = []
 
@@ -693,10 +812,9 @@ def generate_improvement_recommendations(analysis_results, sem_scores, mode="det
                     "strategy": f"Tingkatkan {inf['name']} karena memiliki pengaruh positif tertinggi ({inf['total_influence']:.3f})"
                 }
                 improvement_strategies.append(strategy)
-            else:  # mode singkat
+            else: 
                 short_recommendations.append(f"{inf['name']} (pengaruh: {inf['total_influence']:.3f})")
 
-        # For Y3 (Pemulihan Ekonomi), ensure at least default strategies if none
         if not improvement_strategies and y_key == "Y3" and mode == "detail":
             improvement_strategies.append({
                 "name": "Digitalisasi Uang Elektronik",
@@ -728,67 +846,56 @@ def generate_improvement_recommendations(analysis_results, sem_scores, mode="det
     return recommendations
 
 def create_relationship_map(x_scores, wilayah_id, sem_scores, analysis_results):
-    """
-    Create simple network diagrams (base64 PNG) for top-3 POSITIVE influences per Y.
-    Returns dict { 'Y1': base64_png, ... }
-    """
     try:
         diagrams = {}
         y_names = {"Y1": "Digitalisasi Uang Elektronik", "Y2": "Cashless Society", "Y3": "Pemulihan Ekonomi"}
         sns.set_style("whitegrid")
 
         for y_key in ["Y1", "Y2", "Y3"]:
-            # Hanya ambil variabel dengan pengaruh POSITIF dan urutkan dari tertinggi
             all_influences = analysis_results.get(y_key, {}).get("all_influences", [])
             positive_influences = [inf for inf in all_influences if inf["total_influence"] > 0]
             positive_influences.sort(key=lambda x: x["total_influence"], reverse=True)
-            
-            # Ambil maksimal 3 variabel positif tertinggi
+
             top_positive = positive_influences[:3]
-            
+
             if not top_positive:
                 continue
 
             G = nx.DiGraph()
             Y_label = y_key
             G.add_node(Y_label)
-            
+
             for inf in top_positive:
                 G.add_node(inf["variable"])
-                G.add_edge(inf["variable"], Y_label, 
-                          weight=abs(inf["total_influence"]), 
+                G.add_edge(inf["variable"], Y_label,
+                          weight=abs(inf["total_influence"]),
                           label=f"{inf['total_influence']:.3f}")
 
             pos = nx.spring_layout(G, seed=42, k=1.5)
             fig, ax = plt.subplots(figsize=(10, 8))
-            
-            # Node styling
+
             nx.draw_networkx_nodes(G, pos, node_size=2000, node_color="#4ECDC4", alpha=0.9, ax=ax)
-            nx.draw_networkx_nodes(G, pos, nodelist=[Y_label], node_size=3000, 
+            nx.draw_networkx_nodes(G, pos, nodelist=[Y_label], node_size=3000,
                                  node_color="#FF6B6B", alpha=0.9, ax=ax)
-            
-            # Label styling
+
             nx.draw_networkx_labels(G, pos, font_size=11, font_weight='bold', ax=ax)
-            
-            # Edge styling - hanya hijau untuk positif
+
             edges = G.edges(data=True)
             widths = [max(2, d['weight']*10) for (_,_,d) in edges]
-            nx.draw_networkx_edges(G, pos, width=widths, edge_color='#2E8B57', 
+            nx.draw_networkx_edges(G, pos, width=widths, edge_color='#2E8B57',
                                  arrowsize=25, alpha=0.7, ax=ax)
-            
-            # Edge labels
+
             edge_labels = {(u,v): d['label'] for u,v,d in edges}
-            nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, 
+            nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels,
                                        font_size=10, font_weight='bold', ax=ax)
 
             ax.set_title(f"Top 3 Variabel Positif - {y_names.get(y_key)}", fontsize=16, pad=20)
             ax.axis('off')
-            
-            # Tambahkan legend
-            ax.text(0.02, 0.98, f"Total Variabel Positif: {len(positive_influences)}", 
+
+            ax.text(0.02, 0.98, f"Total Variabel Positif: {len(positive_influences)}",
                    transform=ax.transAxes, fontsize=12, verticalalignment='top',
                    bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
-            
+
             buf = io.BytesIO()
             plt.tight_layout()
             plt.savefig(buf, format='png', bbox_inches='tight', dpi=150, facecolor='white')
@@ -803,18 +910,13 @@ def create_relationship_map(x_scores, wilayah_id, sem_scores, analysis_results):
         return {}
 
 def create_wilayah_sem_diagram(wilayah_id, avg_scores):
-    """
-    Buat diagram SEM untuk wilayah tertentu berdasarkan rata-rata skor
-    """
     try:
-        # Hitung SEM scores berdasarkan rata-rata
         sem_scores = calculate_sem_scores(avg_scores, wilayah_id)
         analysis_results = analyze_variable_influences(avg_scores, wilayah_id, sem_scores)
-        
-        # Buat diagram hubungan
+
         diagrams = create_relationship_map(avg_scores, wilayah_id, sem_scores, analysis_results)
         return diagrams
-        
+
     except Exception as e:
         print(f"Error create_wilayah_sem_diagram for wilayah {wilayah_id}:", e)
         traceback.print_exc()
@@ -825,15 +927,13 @@ def calculate_wilayah_avg_scores():
     conn = get_db_connection()
     if not conn:
         return {}
-    
+
     try:
         cur = conn.cursor(dictionary=True)
-        
-        # Ambil semua data dengan x_scores
+
         cur.execute(f"SELECT wilayah_id, x_scores FROM {DB_TABLE} WHERE x_scores IS NOT NULL")
         rows = cur.fetchall()
-        
-        # Group by wilayah_id dan hitung rata-rata
+
         wilayah_data = defaultdict(list)
         for row in rows:
             wid = row['wilayah_id']
@@ -843,30 +943,27 @@ def calculate_wilayah_avg_scores():
                     wilayah_data[wid].append(x_scores)
                 except:
                     continue
-        
-        # Hitung rata-rata untuk setiap wilayah
+
         avg_scores_by_wilayah = {}
         for wid, scores_list in wilayah_data.items():
             if not scores_list:
                 continue
-                
+
             avg_scores = {}
-            # Hitung rata-rata untuk setiap variabel X
-            for x_var in [f"X{i}" for i in range(1, 11)]:
+            for x_var in [f"X{i}" for i in range(1, 11)] + ["M"]:
                 total = sum(score.get(x_var, 0) for score in scores_list)
                 avg_scores[x_var] = total / len(scores_list)
-            
+
             avg_scores_by_wilayah[wid] = avg_scores
-        
+
         conn.close()
         return avg_scores_by_wilayah
-        
+
     except Exception as e:
         print("Error calculate_wilayah_avg_scores:", e)
         return {}
-    
+
 def generate_responden_per_wilayah_chart(stats_wilayah):
-    """Bar chart untuk total responden per wilayah - VERSI AMAN"""
     try:
         if not stats_wilayah:
             return None
@@ -878,26 +975,22 @@ def generate_responden_per_wilayah_chart(stats_wilayah):
             wilayah_names.append(w['wilayah'])
             counts.append(w['count'])
 
-        # Buat bar chart sederhana
         fig, ax = plt.subplots(figsize=(10, 6))
         bars = ax.bar(wilayah_names, counts, color='#4e73df', alpha=0.8)
 
-        # Tambahkan nilai di atas bar
         for bar in bars:
             height = bar.get_height()
             ax.text(bar.get_x() + bar.get_width()/2., height + 0.1,
-                   f'{int(height)}', 
-                   ha='center', va='bottom', 
+                   f'{int(height)}',
+                   ha='center', va='bottom',
                    fontsize=10, fontweight='bold')
 
-        # Styling sederhana
         ax.set_xlabel('Wilayah', fontsize=12)
         ax.set_ylabel('Jumlah Responden', fontsize=12)
         ax.set_title('Responden per Wilayah', fontsize=14, fontweight='bold')
         plt.xticks(rotation=45)
         plt.tight_layout()
 
-        # Simpan chart
         buf = io.BytesIO()
         plt.savefig(buf, format='png', dpi=100, bbox_inches='tight')
         buf.seek(0)
@@ -909,14 +1002,8 @@ def generate_responden_per_wilayah_chart(stats_wilayah):
     except Exception as e:
         print("Error generate_responden_per_wilayah_chart:", e)
         return None
-    
-# ---------------------------
-# DATABASE HELPERS
-# ---------------------------
+
 def try_mysql_connect(config_override=None):
-    """
-    Attempt connection with optional override (used for auth fallback).
-    """
     cfg = DB_CONFIG.copy()
     if config_override:
         cfg.update(config_override)
@@ -925,7 +1012,6 @@ def try_mysql_connect(config_override=None):
         return conn
     except mysql.connector.Error as err:
         print("MySQL connection error:", err)
-        # fallback attempt with mysql_native_password plugin for some environments
         try:
             cfg2 = cfg.copy()
             cfg2["auth_plugin"] = "mysql_native_password"
@@ -939,9 +1025,6 @@ def try_mysql_connect(config_override=None):
         return None
 
 def get_db_connection():
-    """
-    Returns a connected mysql.connector connection with DB created if missing.
-    """
     conn = None
     try:
         base_cfg = DB_CONFIG.copy()
@@ -961,7 +1044,6 @@ def get_db_connection():
 
         cur.close()
         conn.close()
-        # reconnect with database set
         conn2 = try_mysql_connect(DB_CONFIG)
         if conn2:
             return conn2
@@ -979,16 +1061,12 @@ def get_db_connection():
         return None
 
 def get_db():
-    """
-    Lightweight wrapper that raises if DB is not available (useful for admin functions).
-    """
     conn = get_db_connection()
     if not conn:
         raise Exception("Tidak dapat terhubung ke database")
     return conn
 
 def ensure_table_exists():
-    """Pastikan tabel responden ada dan lengkap tanpa error 1050."""
     conn = get_db_connection()
     if not conn:
         print("[ERROR] DB unavailable")
@@ -997,7 +1075,6 @@ def ensure_table_exists():
     try:
         cur = conn.cursor()
 
-        # Cek apakah tabel sudah ada
         cur.execute("""
             SELECT COUNT(*)
             FROM information_schema.tables
@@ -1007,7 +1084,6 @@ def ensure_table_exists():
         exists = cur.fetchone()[0]
 
         if exists == 0:
-            # Tabel belum ada → buat tabel baru
             print("[INFO] Membuat tabel responden...")
             create_sql = f"""
             CREATE TABLE {DB_TABLE} (
@@ -1024,7 +1100,6 @@ def ensure_table_exists():
                 kategori_Y2 VARCHAR(50),
                 kategori_Y3 VARCHAR(50),
                 x_scores TEXT,
-                cluster_label INT,
                 waktu_analisis DATETIME DEFAULT CURRENT_TIMESTAMP
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
             """
@@ -1034,7 +1109,6 @@ def ensure_table_exists():
         else:
             print("[INFO] Tabel responden sudah ada, memeriksa kolom...")
 
-        # Periksa kolom
         cur.execute(f"""
             SELECT COLUMN_NAME
             FROM INFORMATION_SCHEMA.COLUMNS
@@ -1051,6 +1125,9 @@ def ensure_table_exists():
             "kategori_Y3": "VARCHAR(50)"
         }
 
+        for col in ALL_SCORE_COLUMNS:
+            required[col] = "FLOAT"
+
         for col, col_type in required.items():
             if col not in existing_cols:
                 print(f"[INFO] Menambahkan kolom: {col}")
@@ -1066,10 +1143,6 @@ def ensure_table_exists():
         return False
 
 def save_result_to_db(payload):
-    """
-    Save a result row into DB. payload is a dict with keys:
-    nama, usia, jenis_pekerjaan, wilayah, wilayah_id, Y1, Y2, Y3, kategori_Y1, kategori_Y2, kategori_Y3, x_scores (json)
-    """
     conn = get_db_connection()
     if not conn:
         print("DB unavailable - cannot save")
@@ -1077,26 +1150,17 @@ def save_result_to_db(payload):
 
     try:
         cur = conn.cursor()
-        insert_sql = f"""
-        INSERT INTO {DB_TABLE}
-        (nama, usia, jenis_pekerjaan, wilayah, wilayah_id, Y1, Y2, Y3,
-         kategori_Y1, kategori_Y2, kategori_Y3, x_scores)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        """
-        cur.execute(insert_sql, (
-            payload.get("nama"),
-            payload.get("usia"),
-            payload.get("jenis_pekerjaan"),
-            payload.get("wilayah"),
-            payload.get("wilayah_id"),
-            payload.get("Y1"),
-            payload.get("Y2"),
-            payload.get("Y3"),
-            payload.get("kategori_Y1"),
-            payload.get("kategori_Y2"),
-            payload.get("kategori_Y3"),
-            payload.get("x_scores")
-        ))
+        columns = [
+            "nama", "usia", "jenis_pekerjaan", "wilayah", "wilayah_id",
+            "Y1", "Y2", "Y3",
+            "kategori_Y1", "kategori_Y2", "kategori_Y3", "x_scores"
+        ] + ALL_SCORE_COLUMNS
+
+        col_sql = ", ".join(f"`{c}`" for c in columns)
+        placeholders = ", ".join(["%s"] * len(columns))
+        insert_sql = f"INSERT INTO {DB_TABLE} ({col_sql}) VALUES ({placeholders})"
+
+        cur.execute(insert_sql, tuple(payload.get(c) for c in columns))
         conn.commit()
         cur.close()
         conn.close()
@@ -1114,73 +1178,6 @@ def save_result_to_db(payload):
             pass
         return False
 
-# ---------------------------
-# CLUSTERING FUNCTION
-# ---------------------------
-def run_clustering_on_db(wilayah='all', n_clusters=3):
-    """
-    Ambil data Y1,Y2,Y3 dan jalankan KMeans clustering.
-    Menyimpan hasilnya pada kolom cluster_label.
-    """
-    conn = get_db_connection()
-    if not conn:
-        return False, "Database tidak tersedia."
-
-    try:
-        cur = conn.cursor(dictionary=True)
-
-        # Filter wilayah jika tidak 'all'
-        if wilayah == "all" or wilayah is None:
-            cur.execute(f"SELECT id, Y1, Y2, Y3 FROM {DB_TABLE} "
-                        f"WHERE Y1 IS NOT NULL AND Y2 IS NOT NULL AND Y3 IS NOT NULL")
-        else:
-            wilayah_name = WILAYAH_MAP.get(str(wilayah), wilayah)
-            cur.execute(f"SELECT id, Y1, Y2, Y3 FROM {DB_TABLE} "
-                        f"WHERE wilayah = %s AND Y1 IS NOT NULL AND Y2 IS NOT NULL AND Y3 IS NOT NULL",
-                        (wilayah_name,))
-
-        rows = cur.fetchall()
-
-        if not rows:
-            return False, "Tidak ada data yang cocok untuk clustering."
-
-        df = pd.DataFrame(rows)
-        X = df[['Y1', 'Y2', 'Y3']].astype(float).values
-
-        scaler = StandardScaler()
-        X_scaled = scaler.fit_transform(X)
-
-        model = KMeans(n_clusters=int(n_clusters), random_state=42, n_init=10)
-        labels = model.fit_predict(X_scaled)
-
-        # Save model for runtime
-        global_models['kmeans'] = {
-            "centers_scaled": model.cluster_centers_.tolist(),
-            "n_clusters": int(n_clusters)
-        }
-
-        # Update DB
-        update_sql = f"UPDATE {DB_TABLE} SET cluster_label = %s WHERE id = %s"
-        cur2 = conn.cursor()
-
-        for idx, label in zip(df["id"], labels):
-            cur2.execute(update_sql, (int(label), int(idx)))
-
-        conn.commit()
-        cur.close()
-        cur2.close()
-        conn.close()
-
-        return True, f"Clustering selesai. {len(labels)} data berhasil diberi label."
-
-    except Exception as e:
-        print("Error run_clustering_on_db:", e)
-        traceback.print_exc()
-        return False, f"Error: {e}"
-
-# ---------------------------
-# DESCRIPTIVE STATISTICS
-# ---------------------------
 def calculate_descriptive_stats(ranking_method='avg'):
     conn = get_db_connection()
     if not conn:
@@ -1194,9 +1191,8 @@ def calculate_descriptive_stats(ranking_method='avg'):
     try:
         cur = conn.cursor(dictionary=True)
 
-        # Statistik per wilayah
         cur.execute(f"""
-            SELECT 
+            SELECT
                 wilayah,
                 COUNT(*) as count,
                 AVG(Y1) as avg_Y1,
@@ -1211,7 +1207,6 @@ def calculate_descriptive_stats(ranking_method='avg'):
         """)
         wilayah_rows = cur.fetchall()
 
-        # Convert decimal to float untuk JSON serialization
         stats_wilayah = []
         for row in wilayah_rows:
             stats_wilayah.append({
@@ -1225,9 +1220,8 @@ def calculate_descriptive_stats(ranking_method='avg'):
                 "std_Y3": float(row["std_Y3"] or 0),
             })
 
-        # Statistik per pekerjaan
         cur.execute(f"""
-            SELECT 
+            SELECT
                 jenis_pekerjaan,
                 COUNT(*) as count,
                 AVG(Y1) as avg_Y1,
@@ -1256,7 +1250,6 @@ def calculate_descriptive_stats(ranking_method='avg'):
                 "std_Y3": float(row["std_Y3"] or 0),
             })
 
-        # Ranking calculation untuk wilayah
         for w in stats_wilayah:
             a1 = w.get("avg_Y1", 0)
             a2 = w.get("avg_Y2", 0)
@@ -1270,15 +1263,13 @@ def calculate_descriptive_stats(ranking_method='avg'):
                 rv = a3
             elif ranking_method == "max":
                 rv = max(a1, a2, a3)
-            else:  # avg
+            else:
                 rv = (a1 + a2 + a3) / 3
 
             w["ranking_value"] = rv
 
-        # Sort by ranking
         stats_wilayah_sorted = sorted(stats_wilayah, key=lambda x: x["ranking_value"], reverse=True)
 
-        # Kategori stats
         kategori_stats = {}
         for y in ["Y1", "Y2", "Y3"]:
             cur.execute(f"""
@@ -1299,9 +1290,8 @@ def calculate_descriptive_stats(ranking_method='avg'):
                     "total": res.get("total", 0),
                 }
 
-        # Overall stats
         cur.execute(f"""
-            SELECT 
+            SELECT
                 COUNT(*) AS total_count,
                 AVG(Y1) AS avg1,
                 AVG(Y2) AS avg2,
@@ -1340,16 +1330,7 @@ def calculate_descriptive_stats(ranking_method='avg'):
             "stats_pekerjaan": [],
         }
 
-# ---------------------------
-# ADDITIONAL ANALYSIS HELPERS
-# ---------------------------
-
 def calculate_wilayah_sem_analysis():
-    """
-    Hitung rata-rata Y1,Y2,Y3 per wilayah untuk analisis SEM.
-    Mengembalikan dict keyed by wilayah_id:
-        { wid: { 'wilayah': ..., 'count': ..., 'avg_Y1': ..., 'avg_Y2': ..., 'avg_Y3': ... }, ... }
-    """
     conn = get_db_connection()
     if not conn:
         return {}
@@ -1358,7 +1339,7 @@ def calculate_wilayah_sem_analysis():
         cur = conn.cursor(dictionary=True)
 
         cur.execute(f"""
-            SELECT 
+            SELECT
                 wilayah,
                 wilayah_id,
                 COUNT(*) as count,
@@ -1397,10 +1378,6 @@ def calculate_wilayah_sem_analysis():
 
 
 def generate_insights(stats):
-    """
-    Generate short textual insights from descriptive stats.
-    Returns list of insight strings (ready to render in template).
-    """
     insights = []
     try:
         if not stats:
@@ -1410,7 +1387,6 @@ def generate_insights(stats):
         pekerjaan = stats.get("stats_pekerjaan", [])
         overall = stats.get("overall", {})
 
-        # insights per wilayah
         if wilayah:
             try:
                 tertinggi_y2 = max(wilayah, key=lambda x: x.get("avg_Y2", 0))
@@ -1423,10 +1399,7 @@ def generate_insights(stats):
                 insights.append(f"Wilayah dengan Pemulihan Ekonomi tertinggi: {tertinggi_y3['wilayah']} (skor: {tertinggi_y3['avg_Y3']:.2f})")
                 insights.append(f"Wilayah yang perlu perhatian khusus (Cashless terendah): {terendah_y2['wilayah']} (skor: {terendah_y2['avg_Y2']:.2f})")
             except Exception:
-                # safe fallback if unexpected structure
                 pass
-
-        # insights per pekerjaan
         if pekerjaan:
             try:
                 pekerjaan_tertinggi_y2 = max(pekerjaan, key=lambda x: x.get("avg_Y2", 0))
@@ -1435,8 +1408,6 @@ def generate_insights(stats):
                 insights.append(f"Kelompok pekerjaan terbanyak: {pekerjaan_terbanyak['jenis_pekerjaan']} ({pekerjaan_terbanyak['count']} responden)")
             except Exception:
                 pass
-
-        # overall insight
         if overall and overall.get("total_count", 0) > 0:
             avg_y2 = overall.get("avg_Y2", 0)
             if avg_y2 >= 3.5:
@@ -1453,11 +1424,6 @@ def generate_insights(stats):
 
     return insights
 
-# ---------------------------
-# ROUTES
-# ---------------------------
-
-# FORM DATA DIRI
 @app.route("/kuisioner", methods=["GET", "POST"])
 def kuisioner():
     if request.method == "POST":
@@ -1475,7 +1441,6 @@ def kuisioner():
         jenis_pekerjaan_options=JENIS_PEKERJAAN_OPTIONS
     )
 
-# TAMPILKAN PERTANYAAN
 @app.route("/kuisioner_pertanyaan")
 def kuisioner_pertanyaan():
     if not session.get("nama"):
@@ -1490,33 +1455,33 @@ def kuisioner_pertanyaan():
         app_title=APP_TITLE
     )
 
-# SUBMIT JAWABAN
 @app.route("/submit_kuisioner", methods=["POST"])
 def submit_kuisioner():
     try:
         wid = session.get("wilayah")
 
-        # Ambil jawaban
+        if wid not in WILAYAH_MAP:
+            flash("Sesi berakhir. Silakan isi data diri kembali.", "warning")
+            return redirect(url_for("kuisioner"))
+
         answers = {}
         for var in QUESTIONS_DETAILED:
             for item in QUESTIONS_DETAILED[var]["items"]:
                 val = request.form.get(item)
                 answers[item] = map_answer_to_weight(val)
 
-        x_scores, item_scores = calculate_weighted_scores(answers)
+        x_scores, item_scores = calculate_weighted_scores(answers, wid)
         sem_scores = calculate_sem_scores(x_scores, wid)
 
         kategori_Y1 = score_to_category(sem_scores["Y1"])
         kategori_Y2 = score_to_category(sem_scores["Y2"])
         kategori_Y3 = score_to_category(sem_scores["Y3"])
 
-        # Analysis
         analysis_results = analyze_variable_influences(x_scores, wid, sem_scores)
         improvement_recommendations = generate_improvement_recommendations(
             analysis_results, sem_scores, mode="short"
         )
 
-        # Save DB
         payload = {
             "nama": session.get("nama"),
             "usia": int(session.get("usia")) if session.get("usia") else None,
@@ -1531,6 +1496,13 @@ def submit_kuisioner():
             "kategori_Y3": kategori_Y3,
             "x_scores": json.dumps(x_scores),
         }
+
+        for col in SCORE_COLUMNS_X:
+            payload[col] = round(float(x_scores.get(col, 0) or 0), 4)
+
+        for y_var, col in SCORE_COLUMNS_Y_SURVEY.items():
+            payload[col] = round(float(x_scores.get(y_var, 0) or 0), 4)
+
         save_result_to_db(payload)
 
         return render_template(
@@ -1556,7 +1528,6 @@ def submit_kuisioner():
         flash("Terjadi error.", "danger")
         return redirect(url_for("kuisioner"))
 
-# ADMIN LOGIN
 def check_admin_auth():
     return session.get("admin_logged_in") is True
 
@@ -1571,9 +1542,9 @@ def admin_login_required(f):
 @app.route("/admin_login", methods=["GET", "POST"])
 def admin_login():
     if request.method == "POST":
-        if request.form.get("username") == "Admin" and request.form.get("password") == "SD23":
+        if request.form.get("username") == "Admin" and request.form.get("password") == "AcelSkripsi":
             session["admin_logged_in"] = True
-            return redirect(url_for("data_responden_admin"))  # Redirect ke Data Responden
+            return redirect(url_for("data_responden_admin")) 
         else:
             flash("Login gagal", "danger")
 
@@ -1584,17 +1555,7 @@ def admin_logout():
     session.pop("admin_logged_in", None)
     return redirect(url_for("index"))
 
-# RUN CLUSTERING
-@app.route("/run_clustering")
-@admin_login_required
-def run_clustering():
-    wilayah = request.args.get("wilayah", "all")
-    ok, msg = run_clustering_on_db(wilayah=wilayah, n_clusters=3)
-    flash(msg, "success" if ok else "danger")
-    return redirect(url_for("clustering_result"))
-
-# CLUSTERING RESULT PAGE - STATISTIKA DESKRIPTIF
-@app.route("/clustering_result")
+@app.route("/admin/statistik")
 @admin_login_required
 def clustering_result():
     try:
@@ -1617,44 +1578,41 @@ def clustering_result():
         cur.close()
         conn.close()
 
-        # Statistik deskriptif
         stats = calculate_descriptive_stats(selected_ranking)
-        overall_chart = generate_overall_bar_chart(stats["overall"])
-        responden_per_wilayah_chart = generate_responden_per_wilayah_chart(stats["stats_wilayah"])
-        
 
-        # Tambahan BARU → Grafik rata-rata skor per wilayah
-        avg_score_wilayah_chart = generate_distribution_chart(stats['stats_wilayah'])
-
-        # Grafik existing
-        responden_per_wilayah_chart = generate_responden_per_wilayah_chart(stats["stats_wilayah"])
-
-
+        sw = stats["stats_wilayah"]
+        ov = stats["overall"] or {}
+        chart_data = {
+            "wilayah": [w["wilayah"] for w in sw],
+            "count":   [w["count"] for w in sw],
+            "avg_Y1":  [round(w["avg_Y1"], 2) for w in sw],
+            "avg_Y2":  [round(w["avg_Y2"], 2) for w in sw],
+            "avg_Y3":  [round(w["avg_Y3"], 2) for w in sw],
+            "overall": [
+                round(ov.get("avg_Y1", 0), 2),
+                round(ov.get("avg_Y2", 0), 2),
+                round(ov.get("avg_Y3", 0), 2),
+            ],
+        }
 
         return render_template(
-        "clustering_result.html",
-        app_title=APP_TITLE,
-        data=data,
-        stats=stats,
-        selected_wilayah=selected_wilayah,
-        selected_ranking=selected_ranking,
-        wilayah_options=WILAYAH_MAP,
-        score_to_category=score_to_category,
-        responden_per_wilayah_chart=responden_per_wilayah_chart,
-        avg_score_wilayah_chart=avg_score_wilayah_chart,
-        overall_chart=overall_chart
-    )
-
-
+            "clustering_result.html",
+            app_title=APP_TITLE,
+            data=data,
+            stats=stats,
+            selected_wilayah=selected_wilayah,
+            selected_ranking=selected_ranking,
+            wilayah_options=WILAYAH_MAP,
+            score_to_category=score_to_category,
+            chart_data=chart_data,
+        )
 
     except Exception as e:
-        print("ERROR clustering_result:", e)
+        print("ERROR halaman statistik:", e)
         traceback.print_exc()
         flash("Error mengambil data", "danger")
         return redirect(url_for("index"))
 
-
-# DETAIL RESPONDEN
 @app.route("/detail_responden/<int:responden_id>")
 @admin_login_required
 def detail_responden(responden_id):
@@ -1698,7 +1656,6 @@ def detail_responden(responden_id):
         flash("Error memproses data", "danger")
         return redirect(url_for("clustering_result"))
 
-# HOME PAGE
 @app.route("/")
 def index():
     return render_template(
@@ -1710,59 +1667,15 @@ def index():
 @app.route("/admin/analisis-peta-hubungan")
 @admin_login_required
 def analisis_peta_hubungan():
-    stats = calculate_descriptive_stats()
-    wilayah_analysis = calculate_wilayah_sem_analysis()
-    avg_x_scores_by_wilayah = calculate_wilayah_avg_scores()
-    
-    # Generate charts
-    distribution_chart = generate_distribution_chart(stats['stats_wilayah'])
-    # pekerjaan: avg chart + pie chart
-    pekerjaan_avg_chart = generate_pekerjaan_avg_chart(stats['stats_pekerjaan'])
-    pekerjaan_pie_chart = generate_pekerjaan_pie_chart(stats['stats_pekerjaan'])
-    
-    # Generate rekomendasi overall (dummy X assumed 3.0) and per-wilayah (if available)
-    dummy_x_scores = {f"X{i}": 3.0 for i in range(1, 11)}
-    dummy_sem_scores = {
-        "Y1": stats['overall']['avg_Y1'] if stats['overall'] else 3.0,
-        "Y2": stats['overall']['avg_Y2'] if stats['overall'] else 3.0,
-        "Y3": stats['overall']['avg_Y3'] if stats['overall'] else 3.0
-    }
-    dummy_analysis = analyze_variable_influences(dummy_x_scores, "1", dummy_sem_scores)
-    overall_recommendations = generate_improvement_recommendations(dummy_analysis, dummy_sem_scores, mode="detail", consolidated=True)
-
-    selected_wilayah = request.args.get('wilayah', '1')
-    wilayah_recommendations = []
-    sem_diagrams = {}
-    if selected_wilayah in avg_x_scores_by_wilayah:
-        wilayah_avg_x = avg_x_scores_by_wilayah[selected_wilayah]
-        sem_diagrams = create_wilayah_sem_diagram(selected_wilayah, wilayah_avg_x)
-        sem_scores_w = calculate_sem_scores(wilayah_avg_x, selected_wilayah)
-        analysis_w = analyze_variable_influences(wilayah_avg_x, selected_wilayah, sem_scores_w)
-        wilayah_recommendations = generate_improvement_recommendations(analysis_w, sem_scores_w, mode="detail", consolidated=True)
-
-    insights = generate_insights(stats)
-
     return render_template(
         "analisis_peta_hubungan.html",
-        stats=stats,
-        wilayah_analysis=wilayah_analysis,
-        distribution_chart=distribution_chart,
-        pekerjaan_avg_chart=pekerjaan_avg_chart,
-        pekerjaan_pie_chart=pekerjaan_pie_chart,
-        improvement_recommendations=overall_recommendations,
-        overall_recommendations=overall_recommendations,
-        wilayah_recommendations=wilayah_recommendations,
-        sem_diagrams=sem_diagrams,
-        selected_wilayah=selected_wilayah,
-        avg_x_scores_by_wilayah=avg_x_scores_by_wilayah,
-        WILAYAH_MAP=WILAYAH_MAP,
-        X_VAR_NAME=X_VAR_NAME,  # TAMBAHKAN INI
-        generate_insights=generate_insights,
-        insights=insights,
+        sem_coeffs=SEM_COEFFS,
+        wilayah_map=WILAYAH_MAP,
+        x_names=X_VAR_NAME,
+        y_names=PATH_VAR_NAME,
         app_title=APP_TITLE,
     )
-    
-# SUBSCRIBE ROUTE
+
 @app.route("/subscribe", methods=["POST"])
 def subscribe():
     phone = request.form.get("phone")
@@ -1772,7 +1685,6 @@ def subscribe():
         flash("Nomor telepon diperlukan.", "danger")
     return redirect(url_for("index"))
 
-# ADMIN DATA RESPONDEN
 @app.route("/admin/data-responden")
 @admin_login_required
 def data_responden_admin():
@@ -1783,7 +1695,6 @@ def data_responden_admin():
     conn = get_db_connection()
     cur = conn.cursor(dictionary=True)
 
-    # Get total count for pagination
     if wilayah_filter == "all":
         cur.execute(f"SELECT COUNT(*) as total FROM {DB_TABLE}")
     else:
@@ -1793,7 +1704,6 @@ def data_responden_admin():
     total_count = cur.fetchone()["total"]
     total_pages = (total_count + per_page - 1) // per_page
 
-    # Get paginated data
     offset = (page - 1) * per_page
     if wilayah_filter == "all":
         cur.execute(f"SELECT * FROM {DB_TABLE} ORDER BY id DESC LIMIT %s OFFSET %s", (per_page, offset))
@@ -1815,45 +1725,50 @@ def data_responden_admin():
         total_count=total_count,
         app_title=APP_TITLE,
     )
-    
 
-def ensure_cluster_column():
-    """Pastikan kolom cluster_label ada di tabel responden."""
+def backfill_score_columns():
     conn = get_db_connection()
     if not conn:
-        print("DB unavailable while ensuring cluster column")
         return
 
     try:
         cur = conn.cursor()
+        cur.execute(
+            f"SELECT id, x_scores FROM {DB_TABLE} "
+            f"WHERE x_scores IS NOT NULL AND X1 IS NULL"
+        )
+        rows = cur.fetchall()
 
-        cur.execute("""
-            SELECT COLUMN_NAME 
-            FROM INFORMATION_SCHEMA.COLUMNS
-            WHERE TABLE_SCHEMA=%s AND TABLE_NAME=%s AND COLUMN_NAME='cluster_label'
-        """, (DB_CONFIG["database"], DB_TABLE))
+        updated = 0
+        for rid, xs in rows:
+            try:
+                data = json.loads(xs)
+            except Exception:
+                continue
 
-        exists = cur.fetchone()
+            values = {c: data.get(c) for c in SCORE_COLUMNS_X}
+            for y_var, col in SCORE_COLUMNS_Y_SURVEY.items():
+                values[col] = data.get(y_var)
 
-        if not exists:
-            print("[INFO] Menambahkan kolom cluster_label...")
-            cur.execute(f"ALTER TABLE {DB_TABLE} ADD COLUMN cluster_label INT DEFAULT NULL;")
-            conn.commit()
+            set_sql = ", ".join(f"`{c}`=%s" for c in values)
+            cur.execute(
+                f"UPDATE {DB_TABLE} SET {set_sql} WHERE id=%s",
+                (*values.values(), rid)
+            )
+            updated += 1
 
+        conn.commit()
         cur.close()
         conn.close()
+        if updated:
+            print(f"[INFO] Backfill kolom skor untuk {updated} responden lama.")
 
     except Exception as e:
-        print("Error ensure_cluster_column:", e)
+        print("Error backfill_score_columns:", e)
 
-
-# ---------------------------
-# MAIN START
-# ---------------------------
 if __name__ == "__main__":
     print("Initializing database table...")
     ensure_table_exists()
-    ensure_cluster_column()
+    backfill_score_columns()
     print("Starting Flask app...")
     app.run(debug=True, host="0.0.0.0", port=5000)
-

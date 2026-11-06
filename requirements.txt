@@ -1,0 +1,9 @@
+Flask
+mysql-connector-python
+matplotlib
+networkx
+seaborn
+scikit-learn
+numpy
+pandas
+black

@@ -1,196 +1,537 @@
 <!DOCTYPE html>
-<html lang="en-US" dir="ltr">
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CaSD Admin | Statistika Deskriptif</title>
+<meta name="description" content="CaSD Admin - Statistika Deskriptif">
+<meta name="author" content="Departemen Statistika Universitas Brawijaya">
 
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="shortcut icon" type="image/x-icon" href="{{ url_for('static', filename='assets/img/favicons/favicon.png') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='vendors/bootstrap/bootstrap.min.css') }}">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="{{ url_for('static', filename='assets/css/theme.css') }}" rel="stylesheet">
 
-    <!-- ===============================================-->
-    <!--    Document Title-->
-    <!-- ===============================================-->
-    <title>CaSD Admin | Statistika Deskriptif</title>
+<style>
+/* ===== TOKENS (GLASS) ===== */
+:root{
+  --glass-bg:rgba(255,255,255,.42);
+  --glass-bg-strong:rgba(255,255,255,.62);
+  --glass-border:rgba(255,255,255,.65);
+  --glass-shadow:0 8px 32px rgba(99,16,64,.14);
+  --glass-blur:blur(18px) saturate(160%);
+}
 
-    <!-- ===============================================-->
-    <!--    Favicons-->
-    <!-- ===============================================-->
-    <link rel="shortcut icon" type="image/x-icon" href="{{ url_for('static', filename='assets/img/favicons/favicon.png') }}">
-    <link rel="manifest" href="{{ url_for('static', filename='assets/img/favicons/manifest.json') }}">
-    <meta name="theme-color" content="#ffffff">
+/* ===== GLOBAL ===== */
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;width:100%;min-height:100%}
+body{
+  font-family:'Poppins',sans-serif;
+  background:linear-gradient(135deg,#fdeaea 0%,#f9d9e3 45%,#f5c8d6 100%);
+  background-attachment:fixed;
+  color:#631040;
+}
+body::before,body::after{content:"";position:fixed;z-index:-1;border-radius:50%;filter:blur(80px);pointer-events:none}
+body::before{width:520px;height:520px;top:-140px;right:-100px;background:radial-gradient(circle,#ff8fbf 0%,rgba(255,143,191,0) 70%);opacity:.75}
+body::after{width:620px;height:620px;bottom:-220px;left:20%;background:radial-gradient(circle,#c2416f 0%,rgba(194,65,111,0) 70%);opacity:.35}
 
-    <!-- ===============================================-->
-    <!--    Stylesheets-->
-    <!-- ===============================================-->
-    <link href="{{ url_for('static', filename='assets/css/theme.css') }}" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
-    <!-- Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <style>
-      .admin-container:hover {
-        box-shadow: 0 4px 8px #b4b4b4;
-      }
-      .nav-link:hover {
-        color: #a53d7a !important;
-      }
-      body {
-        background-color: #f8fafc;
-      }
-      .card { border-radius: 15px; }
-      .card-header { border-radius: 15px 15px 0 0 !important; }
-      .table th { font-weight: 600; }
-      .badge { font-size: 0.7em; }
-      .pagination .page-item.active .page-link {
-        background-color: #631040 !important;
-        border-color: #631040 !important;
-      }
-      .pagination .page-link {
-        color: #631040;
-      }
-      .pagination .page-link:hover {
-        color: #631040;
-      }
-    </style>
-  </head>
+/* ===== SIDEBAR (GLASS, floating) ===== */
+.sidebar-wrapper{
+  position:fixed;top:16px;left:16px;width:260px;height:calc(100vh - 32px);
+  background:var(--glass-bg);
+  -webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);
+  border:1px solid var(--glass-border);border-radius:22px;
+  box-shadow:var(--glass-shadow),inset 0 1px 0 rgba(255,255,255,.7);
+  color:#631040;display:flex;flex-direction:column;z-index:1050;padding:22px 14px;
+  transition:transform .3s ease;
+}
+.sidebar-brand{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;box-sizing:border-box;padding:8px 0 26px;margin:0;color:#631040;text-decoration:none;font-size:22px;font-weight:700}
+.sidebar-brand i{width:28px;height:28px;font-size:27px;line-height:1;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;vertical-align:middle;transform-origin:50% 50%;color:#b5195f;animation:rotateStar 4s linear infinite}
+.sidebar-brand i::before{display:block;line-height:1;vertical-align:middle}
+.sidebar-brand span{display:block;line-height:28px;margin-top:-2px}
+.sidebar-brand:hover,.sidebar-brand:focus,.sidebar-brand:active,.sidebar-brand:visited{color:#631040!important;text-decoration:none!important}
+.sidebar-brand:hover span,.sidebar-brand:focus span,.sidebar-brand:active span{color:#631040!important}
+.sidebar-brand:hover i,.sidebar-brand:focus i,.sidebar-brand:active i{color:#b5195f!important}
+@keyframes rotateStar{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.sidebar-menu-section{margin-bottom:26px}
+.sidebar-menu-title{padding:0 14px 10px;color:rgba(99,16,64,.5);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px}
+.sidebar-menu-list{list-style:none;padding:0;margin:0}
+.sidebar-menu-item{margin-bottom:5px}
+.sidebar-menu-link{
+  display:flex;align-items:center;gap:13px;padding:12px 14px;border:1px solid transparent;
+  color:rgba(99,16,64,.8);text-decoration:none;font-size:13px;font-weight:500;border-radius:12px;
+  transition:background .25s ease,color .25s ease,transform .25s ease;
+}
+.sidebar-menu-link i{width:20px;font-size:16px;text-align:center}
+.sidebar-menu-link:hover{background:rgba(255,255,255,.6);border-color:rgba(255,255,255,.75);color:#631040;transform:translateX(3px)}
+.sidebar-menu-link.active{background:rgba(99,16,64,.88);border-color:rgba(255,255,255,.3);color:#fff;font-weight:600;box-shadow:0 6px 18px rgba(99,16,64,.28)}
+.sidebar-menu-link.active:hover{background:rgba(99,16,64,.92);color:#fff;transform:none}
+.sidebar-logout{margin-top:auto;padding:12px 4px 0}
+.sidebar-logout a{
+  display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:11px;border-radius:12px;
+  background:rgba(255,255,255,.55);border:1px solid var(--glass-border);
+  color:#631040;text-decoration:none;font-size:13px;font-weight:500;transition:.25s ease;
+}
+.sidebar-logout a:hover{background:rgba(99,16,64,.88);color:#fff}
 
-  <body>
+/* ===== MAIN ===== */
+.main-wrapper{margin-left:292px;min-height:100vh;padding:0 35px;transition:margin-left .3s ease}
 
-    <!-- ===============================================-->
-    <!--    Main Content-->
-    <!-- ===============================================-->
-    <main class="main" id="top">
-      <nav class="navbar navbar-expand-lg navbar-light sticky-top" data-navbar-on-scroll="data-navbar-on-scroll">
-        <div class="container"><a class="navbar-brand" href="{{ url_for('index') }}"><img src="{{ url_for('static', filename='assets/img/logo.svg') }}" height="31" alt="logo" /></a>
-          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"> </span></button>
-          <div class="collapse navbar-collapse border-lg-0 mt-4 mt-lg-0" id="navbarSupportedContent">
-            <ul class="navbar-nav ms-auto">
-              <li class="nav-item"><a class="nav-link" aria-current="page" href="{{ url_for('data_responden_admin') }}">Data Responden</a></li>
-              <li class="nav-item"><a class="nav-link" aria-current="page" href="{{ url_for('clustering_result') }}">Statistika Deskriptif</a></li>
-              <li class="nav-item"><a class="nav-link" aria-current="page" href="{{ url_for('analisis_peta_hubungan') }}">Analisis Peta Hubungan</a></li>
-            </ul>
-            <div class="d-flex ms-lg-4 justify-content-center" style="background-color: #F5D2D2; border-radius: 10px;"><a class="btn btn-custom" style="color: #631040;" href="{{ url_for('admin_logout') }}">Log Out</a></div>
+/* ===== NAVBAR ===== */
+.navbar-custom{min-height:75px;display:flex;align-items:center;justify-content:space-between;gap:25px;background:transparent}
+.navbar-left{display:flex;align-items:center}
+.navbar-actions{display:flex;align-items:center;gap:7px}
+.navbar-action-btn,.mobile-sidebar-toggle{
+  width:40px;height:40px;display:flex;align-items:center;justify-content:center;
+  background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:12px;
+  -webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);
+  box-shadow:var(--glass-shadow);color:#631040;cursor:pointer;transition:.25s ease;
+}
+.navbar-action-btn:hover{background:rgba(255,255,255,.85)}
+.navbar-profile-btn{display:flex;align-items:center;gap:9px;border:none;background:transparent;color:#631040;font-family:'Poppins',sans-serif;font-size:13px;font-weight:600;cursor:pointer}
+.navbar-profile-btn::after{display:none}
+.navbar-profile-img{width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.85);box-shadow:0 4px 14px rgba(99,16,64,.2)}
+.navbar-profile-caret{font-size:11px}
+.dropdown-menu{
+  background:var(--glass-bg-strong);border:1px solid var(--glass-border);border-radius:14px;
+  -webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);box-shadow:var(--glass-shadow);
+}
+.dropdown-item:hover{background:rgba(255,255,255,.6)}
+
+/* ===== PAGE HEADER ===== */
+.page-header{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;padding:25px 0}
+.page-title{margin:0 0 6px;color:#631040;font-size:27px;font-weight:700}
+.page-subtitle{margin:0;color:#8a6a7b;font-size:13px}
+.breadcrumb{font-size:12px}
+.breadcrumb-item a{color:#8a6a7b;text-decoration:none}
+.breadcrumb-item a:hover{color:#b5195f}
+.breadcrumb-item.active{color:#631040;font-weight:500}
+
+/* ===== STATISTIKA CARD (GLASS) ===== */
+.statistics-card{
+  background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:22px;
+  -webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);
+  box-shadow:var(--glass-shadow),inset 0 1px 0 rgba(255,255,255,.7);
+  overflow:hidden;margin-bottom:24px;
+}
+.statistics-card-header{display:flex;align-items:center;padding:20px 24px;border-bottom:1px solid rgba(255,255,255,.55)}
+.statistics-card-header-icon{
+  width:40px;height:40px;display:flex;align-items:center;justify-content:center;margin-right:13px;border-radius:12px;
+  background:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.8);color:#631040;font-size:17px;
+}
+.statistics-card-header h2{margin:0;color:#631040;font-size:16px;font-weight:600}
+.statistics-card-header p{margin:3px 0 0;color:#7a5a6b;font-size:11px}
+
+/* ===== CHART CARD (GLASS) ===== */
+.chart-card{
+  background:rgba(255,255,255,.35);border:1px solid var(--glass-border);border-radius:16px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.6);overflow:hidden;height:100%;
+}
+.chart-card-header{display:flex;align-items:center;gap:10px;padding:15px 18px;background:rgba(255,255,255,.35);border-bottom:1px solid rgba(255,255,255,.55)}
+.chart-card-header-icon{
+  width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:9px;
+  background:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.8);color:#b5195f;font-size:14px;
+}
+.chart-card-header h3{margin:0;color:#631040;font-size:13px;font-weight:600}
+.chart-card-body{padding:22px;min-height:300px;display:flex;align-items:center;justify-content:center}
+.chart-full{margin-top:24px}
+.chart-empty{min-height:250px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#7a5a6b}
+.chart-empty i{font-size:40px;color:#c9a9bb;margin-bottom:12px}
+.chart-empty p{margin:0;font-size:12px}
+
+/* ===== CHART.JS CANVAS ===== */
+.chart-canvas-wrap{position:relative;width:100%;min-width:0;height:320px}
+.chart-full .chart-canvas-wrap{height:340px}
+
+/* ===== PAGE FOOTER ===== */
+.footer-custom{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:25px 0;margin-top:40px;border-top:1px solid rgba(255,255,255,.6);color:#7a5a6b;font-size:11px}
+.footer-left{display:flex;align-items:center;gap:10px}
+.footer-logo{color:#631040;font-weight:600}
+.footer-logo i{color:#b5195f;margin-right:4px}
+.footer-separator{color:#cbb3c1}
+.footer-copy a{color:#b5195f;text-decoration:none;font-weight:500}
+.footer-copy a:hover{color:#631040}
+
+/* ===== MOBILE ===== */
+.mobile-sidebar-toggle{display:none}
+@media (max-width:1199px){
+  .sidebar-wrapper{transform:translateX(-120%)}
+  .sidebar-wrapper.show{transform:translateX(0)}
+  .main-wrapper{margin-left:0;padding:0 25px}
+  .mobile-sidebar-toggle{display:flex;align-items:center;justify-content:center}
+  .navbar-custom{gap:15px}
+}
+@media (max-width:768px){
+  .main-wrapper{padding:0 15px}
+  .navbar-profile-name{display:none!important}
+  .page-header{flex-direction:column;align-items:flex-start}
+  .chart-card-body{min-height:220px;padding:15px}
+  .chart-canvas-wrap{height:280px}
+  .statistics-card-header{padding:17px 18px}
+  .footer-custom{flex-direction:column;align-items:flex-start}
+}
+@media (max-width:480px){
+  .page-title{font-size:23px}
+  .page-subtitle{font-size:12px}
+  .chart-card-header h3{font-size:12px}
+}
+
+/* ===== FALLBACK tanpa backdrop-filter ===== */
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  .statistics-card,.dropdown-menu,.navbar-action-btn,.sidebar-wrapper{background:rgba(255,255,255,.92)}
+}
+</style>
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar-wrapper" id="sidebar">
+  <a href="{{ url_for('index') }}" class="sidebar-brand">
+    <i class="bi bi-asterisk"></i>
+    <span>CaSD +</span>
+  </a>
+
+  <div class="flex-grow-1 overflow-y-auto">
+
+    <div class="sidebar-menu-section">
+      <div class="sidebar-menu-title">Menu</div>
+      <ul class="sidebar-menu-list">
+        <li class="sidebar-menu-item">
+          <a href="{{ url_for('index') }}" class="sidebar-menu-link">
+            <i class="bi bi-grid-fill"></i><span>Home</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <div class="sidebar-menu-section">
+      <div class="sidebar-menu-title">Analisis</div>
+      <ul class="sidebar-menu-list">
+        <li class="sidebar-menu-item">
+          <a href="{{ url_for('data_responden_admin') }}" class="sidebar-menu-link">
+            <i class="bi bi-people-fill"></i><span>Data Responden</span>
+          </a>
+        </li>
+        <li class="sidebar-menu-item">
+          <a href="{{ url_for('clustering_result') }}" class="sidebar-menu-link active">
+            <i class="bi bi-bar-chart-fill"></i><span>Statistika Deskriptif</span>
+          </a>
+        </li>
+        <li class="sidebar-menu-item">
+          <a href="{{ url_for('analisis_peta_hubungan') }}" class="sidebar-menu-link">
+            <i class="bi bi-map-fill"></i><span>Analisis Peta SEM</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <div class="sidebar-menu-section">
+      <div class="sidebar-menu-title">Account</div>
+      <ul class="sidebar-menu-list">
+        <li class="sidebar-menu-item">
+          <a href="{{ url_for('admin_logout') }}" class="sidebar-menu-link">
+            <i class="bi bi-box-arrow-right"></i><span>Log Out</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+
+  </div>
+
+  <div class="sidebar-logout">
+    <a href="{{ url_for('index') }}">
+      <i class="bi bi-house-door"></i><span>Kembali ke Website</span>
+    </a>
+  </div>
+</div>
+
+
+<!-- MAIN -->
+<div class="main-wrapper">
+
+  <!-- NAVBAR -->
+  <header class="navbar-custom">
+    <div class="navbar-left">
+      <button class="mobile-sidebar-toggle" id="mobile-sidebar-toggle" aria-label="Toggle Navigation">
+        <i class="bi bi-list"></i>
+      </button>
+    </div>
+
+    <div class="navbar-actions">
+      <button class="navbar-action-btn" id="btn-fullscreen" aria-label="Toggle Fullscreen">
+        <i class="bi bi-arrows-fullscreen"></i>
+      </button>
+
+      <div class="dropdown">
+        <button class="navbar-profile-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+          <img src="{{ url_for('static', filename='assets/img/favicons/favicon.png') }}" alt="Administrator" class="navbar-profile-img">
+          <span class="navbar-profile-name">Administrator</span>
+          <i class="bi bi-chevron-down navbar-profile-caret"></i>
+        </button>
+
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><h6 class="dropdown-header">Welcome, Admin!</h6></li>
+          <li>
+            <a class="dropdown-item" href="{{ url_for('index') }}">
+              <i class="bi bi-house-door me-2"></i>Website
+            </a>
+          </li>
+          <li><hr class="dropdown-divider"></li>
+          <li>
+            <a class="dropdown-item text-danger" href="{{ url_for('admin_logout') }}">
+              <i class="bi bi-box-arrow-right me-2"></i>Logout
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </header>
+
+
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Statistika Deskriptif</h1>
+      <p class="page-subtitle">Ringkasan statistik data responden CaSD +</p>
+    </div>
+
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+        <li class="breadcrumb-item">Admin</li>
+        <li class="breadcrumb-item active" aria-current="page">Statistika Deskriptif</li>
+      </ol>
+    </nav>
+  </div>
+
+
+  <!-- STATISTIKA DESKRIPTIF -->
+  <div class="statistics-card">
+
+    <div class="statistics-card-header">
+      <div class="statistics-card-header-icon">
+        <i class="bi bi-bar-chart-line-fill"></i>
+      </div>
+      <div>
+        <h2>Statistika Deskriptif</h2>
+        <p>Visualisasi ringkasan data berdasarkan wilayah dan variabel penelitian</p>
+      </div>
+    </div>
+
+    <div class="p-4">
+      {% if chart_data and chart_data.wilayah %}
+      <div class="row g-4">
+
+        <!-- Responden per Wilayah -->
+        <div class="col-12">
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <div class="chart-card-header-icon"><i class="bi bi-people-fill"></i></div>
+              <h3>Responden per Wilayah</h3>
+            </div>
+            <div class="chart-card-body">
+              <div class="chart-canvas-wrap"><canvas id="chartResponden"></canvas></div>
+            </div>
           </div>
         </div>
-      </nav>
 
-      <section class="pt-7">
-        <div class="container">
-
-          <!-- ==================== STATISTIKA DESKRIPTIF ==================== -->
-          <div class="card shadow-lg border-0 mb-3" style="border-radius: 0.75rem;">
-            <div class="card-header text-white py-3" style="background-color: #631040; border-radius: 0.75rem 0.75rem 0 0;">
-              <h3 class="mb-1" style="font-size: 18px;"><i class="fas fa-chart-bar me-2"></i>Statistika Deskriptif</h3>
+        <!-- Rata-rata Skor per Wilayah -->
+        <div class="col-12">
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <div class="chart-card-header-icon"><i class="bi bi-bar-chart-fill"></i></div>
+              <h3>Rata-rata Skor per Wilayah</h3>
             </div>
-            <div class="card-body">
-
-              <!-- CHART TOTAL RESPONDEN PER WILAYAH -->
-              {% if responden_per_wilayah_chart %}
-              <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header" style="background-color: #f5e5e3;">
-                  <h6 class="mb-0" style="color: #b5195f;">
-                    <i class="fas fa-users me-2"></i> Responden per Wilayah
-                  </h6>
-                </div>
-                <div class="card-body text-center">
-                  <img src="data:image/png;base64,{{ responden_per_wilayah_chart }}"
-                       class="img-fluid rounded"
-                       alt="Responden per Wilayah"
-                       style="max-height: 400px;">
-                </div>
-              </div>
-              {% endif %}
-
-              {% if avg_score_wilayah_chart %}
-              <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header" style="background-color: #f5e5e3;">
-                  <h6 class="mb-0" style="color: #b5195f;">
-                    <i class="fas fa-chart-bar me-2"></i>Rata-rata Skor per Wilayah
-                  </h6>
-                </div>
-                <div class="card-body text-center">
-                  <img src="data:image/png;base64,{{ avg_score_wilayah_chart }}"
-                      class="img-fluid rounded"
-                      alt="Rata-rata skor per Wilayah"
-                      style="max-height: 400px;">
-                </div>
-              </div>
-              {% endif %}
-
-              {% if overall_chart %}
-              <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header" style="background-color: #f5e5e3;">
-                  <h6 class="mb-0" style="color: #b5195f;">
-                    <i class="fas fa-chart-line me-2"></i>Statistik Keseluruhan (Y1, Y2, Y3)
-                  </h6>
-                </div>
-                <div class="card-body text-center">
-                  <img src="data:image/png;base64,{{ overall_chart }}"
-                      class="img-fluid rounded"
-                      alt="Statistik Keseluruhan"
-                      style="max-height: 400px;">
-                </div>
-              </div>
-              {% endif %}
-
+            <div class="chart-card-body">
+              <div class="chart-canvas-wrap"><canvas id="chartAvgWilayah"></canvas></div>
             </div>
           </div>
         </div>
-      </section>
 
-      <!-- ============================================-->
-      <!-- <section> begin ============================-->
-      <section class="pb-2 pb-lg-5">
+      </div>
 
-        <div class="container">
-          <div class="row border-top border-top-secondary pt-7">
-            <div class="col-lg-6 col-md-6 mb-4 mb-md-6 mb-lg-0 mb-sm-2 order-1 order-md-1 order-lg-1">
-              <img class="mb-4" src="{{ url_for('static', filename='assets/img/logo.svg') }}" width="184" alt="" />
-              <p class="mb-lg-" style="font-size: 18px;">Departemen Statistika Universitas Brawijaya</p>
-              <ul class="list-unstyled mb-0">
-                <li class="mb-lg-1" style="font-size: 15px;" >Jalan Veteran, Malang, 65145</a></li>
-                <li class="mb-lg-1" style="font-size: 15px;" >Jawa Timur, Indonesia</a></li>
-                <li class="mb-lg-1" style="font-size: 15px;">jurstatub@ub.ac.id</a></li>
-              </ul>
-            </div>
+      <!-- Statistik Keseluruhan -->
+      <div class="chart-full">
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <div class="chart-card-header-icon"><i class="bi bi-graph-up"></i></div>
+            <h3>Statistik Keseluruhan (Y1, Y2, Y3)</h3>
           </div>
-        </div><!-- end of .container-->
-
-      </section>
-      <!-- <section> close ============================-->
-      <!-- ============================================-->
-
-      <!-- ============================================-->
-      <!-- <section> begin ============================-->
-      <section class="text-center py-0">
-
-        <div class="container">
-          <div class="container border-top py-3">
-            <div class="row justify-content-between">
-              <div class="col-12 col-md-auto">
-                <p class="mb-0">
-                  Made with<span class="fas fa-heart mx-1 text-danger"> </span>by <a class="text-decoration-none ms-1" href="https://statistika.ub.ac.id/" target="_blank">Departemen Statistika Universitas Brawijaya</a></p>
-              </div>
-            </div>
+          <div class="chart-card-body">
+            <div class="chart-canvas-wrap"><canvas id="chartOverall"></canvas></div>
           </div>
-        </div><!-- end of .container-->
+        </div>
+      </div>
 
-      </section>
-      <!-- <section> close ============================-->
-      <!-- ============================================-->
+      {% else %}
+      <div class="chart-empty">
+        <i class="bi bi-bar-chart"></i>
+        <p>Data grafik belum tersedia</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
 
-    </main>
-    <!-- ===============================================-->
-    <!--    End of Main Content-->
-    <!-- ===============================================-->
 
-    <!-- ===============================================-->
-    <!--    JavaScripts-->
-    <!-- ===============================================-->
-    <script src="{{ url_for('static', filename='vendors/@popperjs/popper.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='vendors/bootstrap/bootstrap.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='vendors/is/is.min.js') }}"></script>
-    <script src="https://polyfill.io/v3/polyfill.min.js?features=window.scroll"></script>
-    <script src="{{ url_for('static', filename='vendors/fontawesome/all.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='assets/js/theme.js') }}"></script>
-  </body>
+  <!-- FOOTER -->
+  <footer class="footer-custom">
+    <div class="footer-left">
+      <span class="footer-logo"><i class="bi bi-asterisk"></i>CaSD +</span>
+      <span class="footer-separator">|</span>
+      <span class="footer-copy">&copy; 2026 Departemen Statistika Universitas Brawijaya</span>
+    </div>
 
+    <div class="footer-right">
+      <span class="footer-copy">
+        Made with <i class="bi bi-heart-fill" style="color:#b5195f;"></i> by
+        <a href="https://statistika.ub.ac.id/" target="_blank" rel="noopener">Departemen Statistika Universitas Brawijaya</a>
+      </span>
+    </div>
+  </footer>
+
+</div>
+
+
+<!-- JAVASCRIPT -->
+<script src="{{ url_for('static', filename='vendors/@popperjs/popper.min.js') }}"></script>
+<script src="{{ url_for('static', filename='vendors/bootstrap/bootstrap.min.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
+<script>
+/* ===== CHART.JS ===== */
+(function () {
+  const D = {{ (chart_data or {})|tojson }};
+  if (!D.wilayah || !D.wilayah.length) return;
+  if (typeof Chart === 'undefined') { console.error('Chart.js gagal dimuat.'); return; }
+
+  // Warna tema (ubah di sini kalau mau ganti warna)
+  const C = {
+    maroon: '#631040', rose: '#b5195f', mid: '#c2416f',
+    pink: '#ff8fbf', text: '#631040', grid: 'rgba(99,16,64,.10)'
+  };
+  const PALETTE = [C.maroon, C.rose, C.mid, C.pink, '#e8a1bd'];
+
+  Chart.defaults.font.family = "'Poppins', sans-serif";
+  Chart.defaults.font.size = 12;
+  Chart.defaults.color = C.text;
+
+  // Plugin: angka di atas bar
+  const valueLabels = {
+    id: 'valueLabels',
+    afterDatasetsDraw(chart) {
+      const { ctx } = chart;
+      ctx.save();
+      ctx.font = "600 11px 'Poppins', sans-serif";
+      ctx.fillStyle = C.text;
+      ctx.textAlign = 'center';
+      chart.data.datasets.forEach((ds, i) => {
+        if (!chart.isDatasetVisible(i)) return;
+        chart.getDatasetMeta(i).data.forEach((bar, j) => {
+          const v = ds.data[j];
+          if (v === null || v === undefined) return;
+          ctx.fillText(v, bar.x, bar.y - 6);
+        });
+      });
+      ctx.restore();
+    }
+  };
+
+  const tooltipStyle = {
+    backgroundColor: 'rgba(99,16,64,.92)',
+    titleColor: '#fff', bodyColor: '#fff',
+    padding: 10, cornerRadius: 10
+  };
+
+  const baseOpts = (showLegend, maxY) => ({
+    responsive: true,
+    maintainAspectRatio: false,
+    layout: { padding: { top: 20 } },
+    plugins: {
+      legend: {
+        display: showLegend,
+        labels: { usePointStyle: true, pointStyle: 'rectRounded', color: C.text }
+      },
+      tooltip: tooltipStyle
+    },
+    scales: {
+      x: { grid: { display: false }, ticks: { color: C.text } },
+      y: { beginAtZero: true, max: maxY, grid: { color: C.grid }, ticks: { color: C.text } }
+    }
+  });
+
+  const barStyle = { borderRadius: 8, borderSkipped: false, maxBarThickness: 46 };
+
+  // 1. Responden per Wilayah
+  new Chart(document.getElementById('chartResponden'), {
+    type: 'bar',
+    data: {
+      labels: D.wilayah,
+      datasets: [{
+        label: 'Jumlah Responden',
+        data: D.count,
+        backgroundColor: D.wilayah.map((_, i) => PALETTE[i % PALETTE.length]),
+        ...barStyle
+      }]
+    },
+    options: baseOpts(false),
+    plugins: [valueLabels]
+  });
+
+  // 2. Rata-rata Skor per Wilayah
+  new Chart(document.getElementById('chartAvgWilayah'), {
+    type: 'bar',
+    data: {
+      labels: D.wilayah,
+      datasets: [
+        { label: 'Digitalisasi (Y1)',      data: D.avg_Y1, backgroundColor: C.maroon, ...barStyle },
+        { label: 'Cashless Society (Y2)',  data: D.avg_Y2, backgroundColor: C.mid,    ...barStyle },
+        { label: 'Pemulihan Ekonomi (Y3)', data: D.avg_Y3, backgroundColor: C.pink,   ...barStyle }
+      ]
+    },
+    options: baseOpts(true, 5),
+    plugins: [valueLabels]
+  });
+
+  // 3. Statistik Keseluruhan
+  new Chart(document.getElementById('chartOverall'), {
+    type: 'bar',
+    data: {
+      labels: ['Digitalisasi (Y1)', 'Cashless Society (Y2)', 'Pemulihan Ekonomi (Y3)'],
+      datasets: [{
+        label: 'Rata-rata Skor',
+        data: D.overall,
+        backgroundColor: [C.maroon, C.mid, C.pink],
+        ...barStyle, maxBarThickness: 90
+      }]
+    },
+    options: baseOpts(false, 5),
+    plugins: [valueLabels]
+  });
+})();
+
+/* ===== Mobile sidebar ===== */
+const mobileSidebarToggle = document.getElementById('mobile-sidebar-toggle');
+const sidebar = document.getElementById('sidebar');
+if (mobileSidebarToggle && sidebar) {
+  mobileSidebarToggle.addEventListener('click', function () {
+    sidebar.classList.toggle('show');
+  });
+}
+
+/* ===== Fullscreen ===== */
+const fullscreenButton = document.getElementById('btn-fullscreen');
+if (fullscreenButton) {
+  fullscreenButton.addEventListener('click', function () {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+    } else {
+      document.exitFullscreen();
+    }
+  });
+}
+</script>
+
+</body>
 </html>

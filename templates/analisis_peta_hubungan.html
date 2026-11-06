@@ -1,632 +1,796 @@
 <!DOCTYPE html>
-<html lang="en-US" dir="ltr">
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CaSD Admin | Analisis Peta SEM</title>
+<meta name="description" content="CaSD Admin - Analisis Peta SEM">
+<meta name="author" content="Departemen Statistika Universitas Brawijaya">
 
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="shortcut icon" type="image/x-icon" href="{{ url_for('static', filename='assets/img/favicons/favicon.png') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='vendors/bootstrap/bootstrap.min.css') }}">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="{{ url_for('static', filename='assets/css/theme.css') }}" rel="stylesheet">
 
-    <!-- ===============================================-->
-    <!--    Document Title-->
-    <!-- ===============================================-->
-    <title>CaSD Admin | Analisis Peta Hubungan</title>
+<style>
+/* ===== TOKENS (GLASS) ===== */
+:root{
+  --glass-bg:rgba(255,255,255,.42);
+  --glass-bg-strong:rgba(255,255,255,.62);
+  --glass-border:rgba(255,255,255,.65);
+  --glass-shadow:0 8px 32px rgba(99,16,64,.14);
+  --glass-blur:blur(18px) saturate(160%);
+  --pos:#2a9d6f;--neg:#d6455d;
+}
 
-    <!-- ===============================================-->
-    <!--    Favicons-->
-    <!-- ===============================================-->
-    <link rel="shortcut icon" type="image/x-icon" href="{{ url_for('static', filename='assets/img/favicons/favicon.png') }}">
-    <link rel="manifest" href="{{ url_for('static', filename='assets/img/favicons/manifest.json') }}">
-    <meta name="theme-color" content="#ffffff">
+/* ===== GLOBAL ===== */
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;width:100%;min-height:100%}
+body{
+  font-family:'Poppins',sans-serif;
+  background:linear-gradient(135deg,#fdeaea 0%,#f9d9e3 45%,#f5c8d6 100%);
+  background-attachment:fixed;
+  color:#631040;
+}
+body::before,body::after{content:"";position:fixed;z-index:-1;border-radius:50%;filter:blur(80px);pointer-events:none}
+body::before{width:520px;height:520px;top:-140px;right:-100px;background:radial-gradient(circle,#ff8fbf 0%,rgba(255,143,191,0) 70%);opacity:.75}
+body::after{width:620px;height:620px;bottom:-220px;left:20%;background:radial-gradient(circle,#c2416f 0%,rgba(194,65,111,0) 70%);opacity:.35}
 
-    <!-- ===============================================-->
-    <!--    Stylesheets-->
-    <!-- ===============================================-->
-    <link href="{{ url_for('static', filename='assets/css/theme.css') }}" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
-    <!-- Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <style>
-      :root {
-        --bs-primary: #000000;
-        --bs-primary-rgb: 0,0,0;
-      }
-      .admin-container:hover {
-        box-shadow: 0 4px 8px #b4b4b4;
-      }
-      .nav-link:hover {
-        color: #a53d7a !important;
-      }
-      body {
-        background-color: #f8fafc;
-      }
-      .card { border-radius: 15px; }
-      .card-header { border-radius: 15px 15px 0 0 !important; }
-      .table th { font-weight: 600; }
-      .badge { font-size: 0.7em; }
-      .pagination .page-item.active .page-link {
-        background-color: #631040 !important;
-        border-color: #631040 !important;
-      }
-      .pagination .page-link {
-        color: #631040;
-      }
-      .pagination .page-link:hover {
-        color: #631040;
-      }
-      #btnY1, #btnY2, #btnY3 {
-        box-shadow: none !important;
-      }
-      #btnY1:active, #btnY2:active, #btnY3:active {
-        box-shadow: none !important;
-      }
-      #btnY1:focus, #btnY2:focus, #btnY3:focus {
-        box-shadow: none !important;
-      }
-      #btnY1, #btnY2, #btnY3, #recOverallBtn, #recWilayahBtn {
-        box-shadow: none !important;
-      }
-      #btnY1:active, #btnY2:active, #btnY3:active, #recOverallBtn:active, #recWilayahBtn:active {
-        box-shadow: none !important;
-      }
-      #btnY1:focus, #btnY2:focus, #btnY3:focus, #recOverallBtn:focus, #recWilayahBtn:focus {
-        box-shadow: none !important;
-      }
-      #btnY1, #btnY2, #btnY3, #recOverallBtn, #recWilayahBtn {
-        background-color: #FFFFFF;
-        color: #b5195f;
-        border-color: #FFFFFF;
-      }
-      .badge-tinggi {
-        background-color: #bde3c3 !important;
-        color: #000 !important;
-      }
-      .badge-sedang {
-        background-color: #f8f7ba !important;
-        color: #000 !important;
-      }
-      .badge-rendah {
-        background-color: #e77777 !important;
-        color: #000 !important;
-      }
-      .card-tinggi {
-        border-color: #bde3c3 !important;
-      }
-      .card-sedang {
-        border-color: #f8f7ba !important;
-      }
-      .card-rendah {
-        border-color: #e77777 !important;
-      }
-      .header-tinggi {
-        background-color: #bde3c3 !important;
-        color: #000 !important;
-      }
-      .header-sedang {
-        background-color: #f8f7ba !important;
-        color: #000 !important;
-      }
-      .header-rendah {
-        background-color: #e77777 !important;
-        color: #000 !important;
-      }
-    </style>
-  </head>
+/* ===== SIDEBAR (GLASS, floating) ===== */
+.sidebar-wrapper{
+  position:fixed;top:16px;left:16px;width:260px;height:calc(100vh - 32px);
+  background:var(--glass-bg);
+  -webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);
+  border:1px solid var(--glass-border);border-radius:22px;
+  box-shadow:var(--glass-shadow),inset 0 1px 0 rgba(255,255,255,.7);
+  color:#631040;display:flex;flex-direction:column;z-index:1050;padding:22px 14px;
+  transition:transform .3s ease;
+}
+.sidebar-brand{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;box-sizing:border-box;padding:8px 0 26px;margin:0;color:#631040;text-decoration:none;font-size:22px;font-weight:700}
+.sidebar-brand i{width:28px;height:28px;font-size:27px;line-height:1;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;vertical-align:middle;transform-origin:50% 50%;color:#b5195f;animation:rotateStar 4s linear infinite}
+.sidebar-brand i::before{display:block;line-height:1;vertical-align:middle}
+.sidebar-brand span{display:block;line-height:28px;margin-top:-2px}
+.sidebar-brand:hover,.sidebar-brand:focus,.sidebar-brand:active,.sidebar-brand:visited{color:#631040!important;text-decoration:none!important}
+.sidebar-brand:hover span,.sidebar-brand:focus span,.sidebar-brand:active span{color:#631040!important}
+.sidebar-brand:hover i,.sidebar-brand:focus i,.sidebar-brand:active i{color:#b5195f!important}
+@keyframes rotateStar{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.sidebar-menu-section{margin-bottom:26px}
+.sidebar-menu-title{padding:0 14px 10px;color:rgba(99,16,64,.5);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px}
+.sidebar-menu-list{list-style:none;padding:0;margin:0}
+.sidebar-menu-item{margin-bottom:5px}
+.sidebar-menu-link{
+  display:flex;align-items:center;gap:13px;padding:12px 14px;border:1px solid transparent;
+  color:rgba(99,16,64,.8);text-decoration:none;font-size:13px;font-weight:500;border-radius:12px;
+  transition:background .25s ease,color .25s ease,transform .25s ease;
+}
+.sidebar-menu-link i{width:20px;font-size:16px;text-align:center}
+.sidebar-menu-link:hover{background:rgba(255,255,255,.6);border-color:rgba(255,255,255,.75);color:#631040;transform:translateX(3px)}
+.sidebar-menu-link.active{background:rgba(99,16,64,.88);border-color:rgba(255,255,255,.3);color:#fff;font-weight:600;box-shadow:0 6px 18px rgba(99,16,64,.28)}
+.sidebar-menu-link.active:hover{background:rgba(99,16,64,.92);color:#fff;transform:none}
+.sidebar-logout{margin-top:auto;padding:12px 4px 0}
+.sidebar-logout a{
+  display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:11px;border-radius:12px;
+  background:rgba(255,255,255,.55);border:1px solid var(--glass-border);
+  color:#631040;text-decoration:none;font-size:13px;font-weight:500;transition:.25s ease;
+}
+.sidebar-logout a:hover{background:rgba(99,16,64,.88);color:#fff}
 
-  <body>
+/* ===== MAIN ===== */
+.main-wrapper{margin-left:292px;min-height:100vh;padding:0 35px;transition:margin-left .3s ease}
 
-    <!-- ===============================================-->
-    <!--    Main Content-->
-    <!-- ===============================================-->
-    <main class="main" id="top">
-      <nav class="navbar navbar-expand-lg navbar-light sticky-top" data-navbar-on-scroll="data-navbar-on-scroll">
-        <div class="container"><a class="navbar-brand" href="{{ url_for('index') }}"><img src="{{ url_for('static', filename='assets/img/logo.svg') }}" height="31" alt="logo" /></a>
-          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"> </span></button>
-          <div class="collapse navbar-collapse border-lg-0 mt-4 mt-lg-0" id="navbarSupportedContent">
-            <ul class="navbar-nav ms-auto">
-              <li class="nav-item"><a class="nav-link" aria-current="page" href="{{ url_for('data_responden_admin') }}">Data Responden</a></li>
-              <li class="nav-item"><a class="nav-link" aria-current="page" href="{{ url_for('clustering_result') }}">Statistika Deskriptif</a></li>
-              <li class="nav-item"><a class="nav-link" aria-current="page" href="{{ url_for('analisis_peta_hubungan') }}">Analisis Peta Hubungan</a></li>
-            </ul>
-            <div class="d-flex ms-lg-4 justify-content-center" style="background-color: #F5D2D2; border-radius: 10px;"><a class="btn btn-custom" style="color: #631040; font-weight: bold;" href="{{ url_for('admin_logout') }}">Log Out</a></div>
+/* ===== NAVBAR ===== */
+.navbar-custom{min-height:75px;display:flex;align-items:center;justify-content:space-between;gap:25px;background:transparent}
+.navbar-left{display:flex;align-items:center}
+.navbar-actions{display:flex;align-items:center;gap:7px}
+.navbar-action-btn,.mobile-sidebar-toggle{
+  width:40px;height:40px;display:flex;align-items:center;justify-content:center;
+  background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:12px;
+  -webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);
+  box-shadow:var(--glass-shadow);color:#631040;cursor:pointer;transition:.25s ease;
+}
+.navbar-action-btn:hover{background:rgba(255,255,255,.85)}
+.navbar-profile-btn{display:flex;align-items:center;gap:9px;border:none;background:transparent;color:#631040;font-family:'Poppins',sans-serif;font-size:13px;font-weight:600;cursor:pointer}
+.navbar-profile-btn::after{display:none}
+.navbar-profile-img{width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.85);box-shadow:0 4px 14px rgba(99,16,64,.2)}
+.navbar-profile-caret{font-size:11px}
+.dropdown-menu{
+  background:var(--glass-bg-strong);border:1px solid var(--glass-border);border-radius:14px;
+  -webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);box-shadow:var(--glass-shadow);
+}
+.dropdown-item:hover{background:rgba(255,255,255,.6)}
+
+/* ===== PAGE HEADER ===== */
+.page-header{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;padding:25px 0}
+.page-title{margin:0 0 6px;color:#631040;font-size:27px;font-weight:700}
+.page-subtitle{margin:0;color:#8a6a7b;font-size:13px}
+.breadcrumb{font-size:12px}
+.breadcrumb-item a{color:#8a6a7b;text-decoration:none}
+.breadcrumb-item a:hover{color:#b5195f}
+.breadcrumb-item.active{color:#631040;font-weight:500}
+
+/* ===== STATISTIKA CARD (GLASS) ===== */
+.statistics-card{
+  background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:22px;
+  -webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);
+  box-shadow:var(--glass-shadow),inset 0 1px 0 rgba(255,255,255,.7);
+  overflow:hidden;margin-bottom:24px;
+}
+.statistics-card-header{display:flex;align-items:center;padding:20px 24px;border-bottom:1px solid rgba(255,255,255,.55)}
+.statistics-card-header-icon{
+  width:40px;height:40px;display:flex;align-items:center;justify-content:center;margin-right:13px;border-radius:12px;
+  background:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.8);color:#631040;font-size:17px;
+}
+.statistics-card-header h2{margin:0;color:#631040;font-size:16px;font-weight:600}
+.statistics-card-header p{margin:3px 0 0;color:#7a5a6b;font-size:11px}
+
+/* ===== CHART CARD (GLASS) ===== */
+.chart-card{
+  background:rgba(255,255,255,.35);border:1px solid var(--glass-border);border-radius:16px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.6);overflow:hidden;height:100%;
+}
+.chart-card-header{display:flex;align-items:center;gap:10px;padding:15px 18px;background:rgba(255,255,255,.35);border-bottom:1px solid rgba(255,255,255,.55)}
+.chart-card-header-icon{
+  width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:9px;flex-shrink:0;
+  background:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.8);color:#b5195f;font-size:14px;
+}
+.chart-card-header h3{margin:0;color:#631040;font-size:13px;font-weight:600}
+.chart-card-header p{margin:2px 0 0;color:#7a5a6b;font-size:11px}
+.chart-card-body{padding:22px;min-height:300px;display:flex;align-items:center;justify-content:center}
+.chart-card-body.block{display:block}
+.chart-full{margin-top:24px}
+
+/* ===== KONTROL ===== */
+.ctrl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px}
+.ctrl .lbl{font-size:12px;font-weight:600;color:#7a5a6b;margin-right:4px}
+.seg{border:1px solid var(--glass-border);background:rgba(255,255,255,.5);color:#631040;font:600 12.5px 'Poppins',sans-serif;padding:.4rem 1rem;border-radius:50rem;cursor:pointer;transition:.2s}
+.seg:hover{background:rgba(255,255,255,.85)}
+.seg[aria-pressed="true"]{background:#631040;border-color:#631040;color:#fff}
+.seg:focus-visible{outline:3px solid #b5195f;outline-offset:2px}
+.wil-select{min-width:240px;max-width:100%;border:1px solid var(--glass-border);background-color:rgba(255,255,255,.6);color:#631040;font:600 12.5px 'Poppins',sans-serif;padding:.45rem 2.2rem .45rem 1rem;border-radius:50rem;cursor:pointer;transition:.2s;-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23631040' viewBox='0 0 16 16'%3E%3Cpath d='M1.5 5.5l6.5 6.5 6.5-6.5-1-1L8 10 2.5 4.5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right .9rem center}
+.wil-select:hover{background-color:rgba(255,255,255,.9)}
+.wil-select:focus-visible{outline:3px solid #b5195f;outline-offset:2px}
+.warn{display:none;padding:.8rem 1.1rem;margin-bottom:14px;border-radius:14px;background:rgba(217,142,4,.14);border:1px solid rgba(217,142,4,.4);font-size:12.5px;color:#7a4f00}
+.legend{display:flex;flex-wrap:wrap;gap:16px;font-size:12px;color:#7a5a6b;margin-bottom:10px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{display:inline-block;width:26px;height:4px;border-radius:4px}
+
+/* ===== DIAGRAM ===== */
+.diagram{background:rgba(255,255,255,.35);border:1px solid var(--glass-border);border-radius:16px;overflow-x:auto}
+.diagram svg{display:block;width:100%;min-width:780px;height:auto}
+.edge{fill:none;opacity:.55;transition:opacity .2s;pointer-events:none}
+.hit{fill:none;stroke:transparent;stroke-width:14;cursor:pointer;pointer-events:stroke}.hit.hide{display:none}
+.edge.yy{opacity:.9}.edge.dim{opacity:.06}.edge.hi{opacity:1}.edge.hide{display:none}
+.elabel{font:600 11px 'Poppins',sans-serif;fill:#631040;paint-order:stroke;stroke:#fff;stroke-width:4px;stroke-linejoin:round;opacity:0;pointer-events:none;transition:opacity .2s}
+.elabel.on{opacity:1}
+
+/* Node semua berbentuk oval (ellipse) */
+.node{cursor:pointer}
+.node ellipse{fill:rgba(255,255,255,.9);stroke:#631040;stroke-width:1.2;transition:.2s}
+.node.y ellipse{fill:#631040}
+.node text{font:500 11px 'Poppins',sans-serif;fill:#631040;pointer-events:none}
+.node.y text{fill:#fff}
+.node .code{font-weight:700}.node .sub{font-size:10px;opacity:.85}
+.node:hover ellipse,.node.sel ellipse{stroke:#b5195f;stroke-width:2.5}
+.node.dim{opacity:.35}
+.edge.mod{stroke-dasharray:7 5}
+.node.m ellipse{fill:#b5195f;stroke:#b5195f}
+.node.m text{fill:#fff}
+
+/* Kotak info: ukuran tetap, isi yang panjang di-scroll di dalam kotak */
+.info{margin-top:16px;padding:16px 18px;background:rgba(255,255,255,.5);border:1px solid var(--glass-border);border-radius:16px;font-size:13px;height:250px;overflow-y:auto;scrollbar-gutter:stable}
+.info h4{font-size:14px;font-weight:700;margin:0 0 6px}
+.info ul{list-style:none;margin:6px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:4px 18px}
+.info li{display:flex;justify-content:space-between;gap:10px}
+.p{color:var(--pos);font-weight:700}.n{color:var(--neg);font-weight:700}
+.muted{color:#7a5a6b}
+
+.sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:16px}
+.sum div{padding:14px 16px;background:rgba(255,255,255,.5);border:1px solid var(--glass-border);border-radius:14px;font-size:12.5px}
+.sum b{display:block;font-size:13px;margin-bottom:4px}
+
+/* ===== CHART KOEFISIEN ===== */
+.chart-wrap{position:relative;width:100%;height:380px}
+.caption{font-size:12px;color:#7a5a6b;margin:12px 0 0}
+
+/* ===== PAGE FOOTER ===== */
+.footer-custom{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:25px 0;margin-top:40px;border-top:1px solid rgba(255,255,255,.6);color:#7a5a6b;font-size:11px}
+.footer-left{display:flex;align-items:center;gap:10px}
+.footer-logo{color:#631040;font-weight:600}
+.footer-logo i{color:#b5195f;margin-right:4px}
+.footer-separator{color:#cbb3c1}
+.footer-copy a{color:#b5195f;text-decoration:none;font-weight:500}
+.footer-copy a:hover{color:#631040}
+
+/* ===== MOBILE ===== */
+.mobile-sidebar-toggle{display:none}
+@media (max-width:1199px){
+  .sidebar-wrapper{transform:translateX(-120%)}
+  .sidebar-wrapper.show{transform:translateX(0)}
+  .main-wrapper{margin-left:0;padding:0 25px}
+  .mobile-sidebar-toggle{display:flex;align-items:center;justify-content:center}
+  .navbar-custom{gap:15px}
+}
+@media (max-width:768px){
+  .main-wrapper{padding:0 15px}
+  .navbar-profile-name{display:none!important}
+  .page-header{flex-direction:column;align-items:flex-start}
+  .chart-card-body{padding:15px}
+  .statistics-card-header{padding:17px 18px}
+  .footer-custom{flex-direction:column;align-items:flex-start}
+}
+@media (max-width:480px){
+  .page-title{font-size:23px}
+  .page-subtitle{font-size:12px}
+  .chart-card-header h3{font-size:12px}
+}
+@media (prefers-reduced-motion:reduce){.edge,.elabel,.node ellipse,.sidebar-brand i{animation:none}}
+
+/* ===== FALLBACK tanpa backdrop-filter ===== */
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  .statistics-card,.dropdown-menu,.navbar-action-btn,.sidebar-wrapper{background:rgba(255,255,255,.92)}
+}
+</style>
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar-wrapper" id="sidebar">
+  <a href="{{ url_for('index') }}" class="sidebar-brand">
+    <i class="bi bi-asterisk"></i>
+    <span>CaSD +</span>
+  </a>
+
+  <div class="flex-grow-1 overflow-y-auto">
+
+    <div class="sidebar-menu-section">
+      <div class="sidebar-menu-title">Menu</div>
+      <ul class="sidebar-menu-list">
+        <li class="sidebar-menu-item">
+          <a href="{{ url_for('index') }}" class="sidebar-menu-link">
+            <i class="bi bi-grid-fill"></i><span>Home</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <div class="sidebar-menu-section">
+      <div class="sidebar-menu-title">Analisis</div>
+      <ul class="sidebar-menu-list">
+        <li class="sidebar-menu-item">
+          <a href="{{ url_for('data_responden_admin') }}" class="sidebar-menu-link">
+            <i class="bi bi-people-fill"></i><span>Data Responden</span>
+          </a>
+        </li>
+        <li class="sidebar-menu-item">
+          <a href="{{ url_for('clustering_result') }}" class="sidebar-menu-link">
+            <i class="bi bi-bar-chart-fill"></i><span>Statistika Deskriptif</span>
+          </a>
+        </li>
+        <li class="sidebar-menu-item">
+          <a href="{{ url_for('analisis_peta_hubungan') }}" class="sidebar-menu-link active">
+            <i class="bi bi-map-fill"></i><span>Analisis Peta SEM</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <div class="sidebar-menu-section">
+      <div class="sidebar-menu-title">Account</div>
+      <ul class="sidebar-menu-list">
+        <li class="sidebar-menu-item">
+          <a href="{{ url_for('admin_logout') }}" class="sidebar-menu-link">
+            <i class="bi bi-box-arrow-right"></i><span>Log Out</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+
+  </div>
+
+  <div class="sidebar-logout">
+    <a href="{{ url_for('index') }}">
+      <i class="bi bi-house-door"></i><span>Kembali ke Website</span>
+    </a>
+  </div>
+</div>
+
+
+<!-- MAIN -->
+<div class="main-wrapper">
+
+  <!-- NAVBAR -->
+  <header class="navbar-custom">
+    <div class="navbar-left">
+      <button class="mobile-sidebar-toggle" id="mobile-sidebar-toggle" aria-label="Toggle Navigation">
+        <i class="bi bi-list"></i>
+      </button>
+    </div>
+
+    <div class="navbar-actions">
+      <button class="navbar-action-btn" id="btn-fullscreen" aria-label="Toggle Fullscreen">
+        <i class="bi bi-arrows-fullscreen"></i>
+      </button>
+
+      <div class="dropdown">
+        <button class="navbar-profile-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+          <img src="{{ url_for('static', filename='assets/img/favicons/favicon.png') }}" alt="Administrator" class="navbar-profile-img">
+          <span class="navbar-profile-name">Administrator</span>
+          <i class="bi bi-chevron-down navbar-profile-caret"></i>
+        </button>
+
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><h6 class="dropdown-header">Welcome, Admin!</h6></li>
+          <li>
+            <a class="dropdown-item" href="{{ url_for('index') }}">
+              <i class="bi bi-house-door me-2"></i>Website
+            </a>
+          </li>
+          <li><hr class="dropdown-divider"></li>
+          <li>
+            <a class="dropdown-item text-danger" href="{{ url_for('admin_logout') }}">
+              <i class="bi bi-box-arrow-right me-2"></i>Logout
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </header>
+
+
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Analisis Peta SEM</h1>
+      <p class="page-subtitle">Diagram jalur dan koefisien pengaruh antarvariabel per wilayah</p>
+    </div>
+
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+        <li class="breadcrumb-item">Admin</li>
+        <li class="breadcrumb-item active" aria-current="page">Analisis Peta SEM</li>
+      </ol>
+    </nav>
+  </div>
+
+
+  <!-- ANALISIS PETA HUBUNGAN -->
+  <div class="statistics-card">
+
+    <div class="statistics-card-header">
+      <div class="statistics-card-header-icon">
+        <i class="bi bi-map-fill"></i>
+      </div>
+      <div>
+        <h2>Analisis Peta SEM</h2>
+        <p>Visualisasi jalur dan koefisien pengaruh berdasarkan wilayah dan variabel penelitian</p>
+      </div>
+    </div>
+
+    <div class="p-4">
+
+      <!-- Diagram Jalur -->
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <div class="chart-card-header-icon"><i class="bi bi-diagram-3-fill"></i></div>
+          <div>
+            <h3>Diagram Jalur</h3>
+            <p>Arahkan kursor ke variabel atau garis. Klik variabel untuk mengunci sorotan.</p>
           </div>
         </div>
-      </nav>
+        <div class="chart-card-body block">
+          <div class="ctrl">
+            <label class="lbl" for="wilSelect">Wilayah</label>
+            <select class="wil-select" id="wilSelect" aria-label="Pilih wilayah"></select>
+          </div>
+          <div class="ctrl" id="filBtns">
+            <span class="lbl">Tampilkan</span>
+            <button class="seg" data-f="all" aria-pressed="true">Semua jalur</button>
+            <button class="seg" data-f="Y1" aria-pressed="false">Menuju Y1</button>
+            <button class="seg" data-f="Y2" aria-pressed="false">Menuju Y2</button>
+            <button class="seg" data-f="Y3" aria-pressed="false">Menuju Y3</button>
+            <button class="seg" data-f="YY" aria-pressed="false">Antar Y</button>
+          </div>
+          <div class="warn" id="warn"><i class="bi bi-exclamation-triangle-fill me-1"></i><b>Perhatian:</b> ada koefisien yang sangat besar (lebih dari 3) di wilayah ini. Itu biasanya tanda model tidak stabil, misalnya karena multikolinearitas atau sampel kecil, sehingga interpretasinya perlu hati-hati.</div>
+          <div class="legend">
+            <span><i style="background:var(--pos)"></i>Pengaruh positif</span>
+            <span><i style="background:var(--neg)"></i>Pengaruh negatif</span>
+            <span><i style="background:repeating-linear-gradient(90deg,#b5195f 0 6px,transparent 6px 10px)"></i>M memoderasi jalur Y1→Y3 dan Y2→Y3</span>
+            <span class="muted">Tebal garis = besar koefisien, dibandingkan dalam satu variabel tujuan yang sama.</span>
+          </div>
+          <div class="diagram"><svg id="svg" viewBox="0 0 1000 580" role="img" aria-label="Diagram jalur SEM"></svg></div>
+          <div class="info" id="info"><span class="muted">Arahkan kursor ke variabel atau garis untuk melihat koefisiennya.</span></div>
+          <div class="sum" id="sum"></div>
+        </div>
+      </div>
 
-      <section class="pt-7">
-        <div class="container">
-
-          <!-- ==================== ANALISIS PETA HUBUNGAN ==================== -->
-          <div class="card shadow-lg border-0 mb-3" style="border-radius: 0.75rem;">
-            <div class="card-header text-white py-3" style="background-color: #631040; border-radius: 0.75rem 0.75rem 0 0;">
-              <h3 class="mb-1" style="font-size: 18px;"><i class="fas fa-project-diagram me-2"></i>Analisis Peta Hubungan</h3>
+      <!-- Koefisien Jalur -->
+      <div class="chart-full">
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <div class="chart-card-header-icon"><i class="bi bi-bar-chart-steps"></i></div>
+            <div>
+              <h3>Koefisien Jalur</h3>
+              <p>Urut dari pengaruh terbesar. Wilayah mengikuti pilihan di atas.</p>
             </div>
-            <div class="card-body">
-
-              <div class="row mb-4">
-                <div class="col-md-6">
-                  <label class="form-label fw-bold">Pilih Wilayah untuk Analisis Peta Hubungan</label>
-                  <form method="GET" class="d-flex gap-2">
-                    <select name="wilayah" class="form-select" onchange="this.form.submit()">
-                      <option value="" {% if not selected_wilayah %}selected{% endif %}>Pilih Wilayah</option>
-                      {% for wid in avg_x_scores_by_wilayah.keys() %}
-                      <option value="{{ wid }}" {% if selected_wilayah == wid %}selected{% endif %}>
-                        {{ WILAYAH_MAP.get(wid, wid) }}
-                      </option>
-                      {% endfor %}
-                    </select>
-                  </form>
-                </div>
-              </div>
-
-              <!-- VISUALISASI PETA HUBUNGAN -->
-              <div class="card mb-4 border-0 shadow-lg">
-                <div class="card-header" style="background-color: #f5e5e3;">
-                  <div class="d-flex justify-content-between align-items-center">
-                    <h6 class="mb-0" style="color: #b5195f;">
-                      <i class="fas fa-network-wired me-2"></i>
-                      Visualisasi Peta Hubungan Variabel
-                    </h6>
-                    <div class="d-flex gap-2" role="group">
-                      <button type="button" id="btnY1" class="btn btn-light active">
-                        <i class="fas fa-money-bill-wave me-1"></i>Digitalisasi Uang Elektronik
-                      </button>
-                      <button type="button" id="btnY2" class="btn btn-light">
-                        <i class="fas fa-credit-card me-1"></i>Cashless Society
-                      </button>
-                      <button type="button" id="btnY3" class="btn btn-light">
-                        <i class="fas fa-chart-line me-1"></i>Pemulihan Ekonomi
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="card-body">
-                  {% if sem_diagrams %}
-                  <div class="text-center mb-4">
-                    <div id="petaHubunganContainer">
-                      {% for y_key, diagram in sem_diagrams.items() %}
-                      <div class="peta-hubungan-image {% if loop.first %}active{% else %}d-none{% endif %}" id="peta-{{ y_key }}">
-                        <img src="data:image/png;base64,{{ diagram }}"
-                             class="img-fluid rounded shadow"
-                             alt="Peta Hubungan {{ y_key }}"
-                             style="max-height: 450px; border: 2px solid #e9ecef;">
-                      </div>
-                      {% endfor %}
-                    </div>
-                  </div>
-
-                  <!-- Legend Variabel -->
-                  <div class="row mt-4">
-                    <div class="col-12">
-                      <div class="card border-light">
-                        <div class="card-header bg-light">
-                          <h6 class="mb-0 text-primary">
-                            <i class="fas fa-list me-2"></i>Keterangan Variabel
-                          </h6>
-                        </div>
-                        <div class="card-body p-3 px-4">
-                          <div class="row g-2">
-                            {% for i in range(1,11) %}
-                            {% set x_key = "X" ~ i %}
-                            <div class="col-lg-3 col-md-4 col-sm-6">
-                              <div class="d-flex align-items-center mb-1">
-                                <span class="badge bg-info me-2" style="font-size: 0.7em;">{{ x_key }}</span>
-                                <small class="text-muted" style="font-size: 0.75em;">{{ X_VAR_NAME.get(x_key, x_key) }}</small>
-                              </div>
-                            </div>
-                            {% endfor %}
-                            <div class="col-lg-3 col-md-4 col-sm-6">
-                              <div class="d-flex align-items-center mb-1">
-                                <span class="badge bg-danger me-2" style="font-size: 0.7em;">Y1</span>
-                                <small class="text-muted" style="font-size: 0.75em;">Digitalisasi Uang Elektronik</small>
-                              </div>
-                            </div>
-                            <div class="col-lg-3 col-md-4 col-sm-6">
-                              <div class="d-flex align-items-center mb-1">
-                                <span class="badge bg-success me-2" style="font-size: 0.7em;">Y2</span>
-                                <small class="text-muted" style="font-size: 0.75em;">Cashless Society</small>
-                              </div>
-                            </div>
-                            <div class="col-lg-3 col-md-4 col-sm-6">
-                              <div class="d-flex align-items-center mb-1">
-                                <span class="badge bg-warning me-2" style="font-size: 0.7em;">Y3</span>
-                                <small class="text-muted" style="font-size: 0.75em;">Pemulihan Ekonomi</small>
-                              </div>
-                            </div>
-                          </div>
-                          <div class="mt-3 p-2 bg-light rounded">
-                            <small class="text-muted" style="font-size: 0.8em;">
-                              <i class="fas fa-info-circle me-1 text-primary"></i>
-                              <strong>Keterangan Visualisasi:</strong> Diagram menunjukkan hubungan pengaruh antara variabel independen (X) dan dependen (Y).
-                              Garis hijau menunjukkan pengaruh positif.
-                            </small>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  {% else %}
-                  <div class="text-center text-muted py-5">
-                    <i class="fas fa-project-diagram fa-4x mb-3"></i>
-                    <p>Belum ada data peta hubungan untuk wilayah terpilih.</p>
-                  </div>
-                  {% endif %}
-                </div>
-              </div>
-
-              <!-- REKOMENDASI DENGAN TOGGLE -->
-              <div class="card mb-4 border-0 shadow-lg">
-                <div class="card-header" style="background-color: #f5e5e3;">
-                  <div class="d-flex justify-content-between align-items-center">
-                    <h6 class="mb-0" style="color: #b5195f;"><i class="fas fa-bullseye me-2"></i>Rekomendasi Peningkatan</h6>
-                    <div class="d-flex gap-2" role="group">
-                      <button id="recOverallBtn" class="btn btn-light active">
-                        <i class="fas fa-globe me-1"></i>Keseluruhan
-                      </button>
-                      <button id="recWilayahBtn" class="btn btn-light">
-                        <i class="fas fa-map-marker-alt me-1"></i>Per Wilayah
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                <div class="card-body">
-                  <!-- Rekomendasi Keseluruhan -->
-                  <div id="recOverall">
-                    {% if overall_recommendations %}
-                    <div class="row">
-                    {% for rec in overall_recommendations %}
-                    <div class="col-md-12 mb-3">
-                    <div class="card border-0 shadow-sm">
-                      <div class="card-header {% if rec.kategori == 'Tinggi' %}header-tinggi{% elif rec.kategori == 'Sedang' %}header-sedang{% else %}header-rendah{% endif %} py-2">
-                        <div class="d-flex justify-content-between align-items-center">
-                          <h6 class="mb-0" style="font-size: 0.9rem;">
-                            <i class="fas {% if rec.kategori == 'Tinggi' %}fa-check-circle{% elif rec.kategori == 'Sedang' %}fa-exclamation-triangle{% else %}fa-exclamation-circle{% endif %} me-2"></i>
-                            {{ rec.y }}
-                          </h6>
-                          <div>
-                            {% if rec.nilai %}
-                            <span class="badge bg-light text-dark me-1" style="font-size: 0.7rem;">
-                              Nilai: {{ "%.2f"|format(rec.nilai) }}
-                            </span>
-                            {% endif %}
-                            {% if rec.kategori %}
-                            <span class="badge {% if rec.kategori == 'Tinggi' %}bg-success{% elif rec.kategori == 'Sedang' %}bg-warning{% else %}bg-danger{% endif %}" style="font-size: 0.7rem;">
-                              {{ rec.kategori }}
-                            </span>
-                            {% endif %}
-                          </div>
-                        </div>
-                      </div>
-                      <div class="card-body p-3">
-                          {% if rec.improvement_strategies %}
-                          <h6 class="mb-2" style="font-size: 0.85rem; color: black;">
-                            <i class="fas fa-arrow-up me-2"></i>Strategi Peningkatan Prioritas Keseluruhan:
-                          </h6>
-                              <div class="row g-2">
-                                {% for strategy in rec.improvement_strategies[:3] %}
-                                <div class="col-md-4 mb-2">
-                                  <div class="card border-primary h-100 {% if strategy.influence > 0.5 %}card-tinggi{% elif strategy.influence > 0.2 %}card-sedang{% else %}card-rendah{% endif %}">
-                                    <div class="card-header bg-light py-1 px-2">
-                                      <div class="d-flex justify-content-between align-items-center">
-                                        <strong class="text-primary" style="font-size: 0.8rem;">{{ strategy.name }}</strong>
-                                        <span class="badge bg-secondary" style="font-size: 0.65rem;">Skor: {{ "%.2f"|format(strategy.current_score) }}</span>
-                                      </div>
-                                    </div>
-                                    <div class="card-body p-2">
-                                      <p class="mb-1" style="font-size: 0.75rem; line-height: 1.2;">{{ strategy.strategy }}</p>
-                                      <div class="d-flex justify-content-between align-items-center mt-1">
-                                        <small class="text-muted" style="font-size: 0.7rem;">
-                                          <i class="fas fa-chart-line me-1"></i>
-                                          Pengaruh: {{ "%.3f"|format(strategy.influence) }}
-                                        </small>
-                                        <span class="badge {% if strategy.influence > 0.5 %}badge-tinggi{% elif strategy.influence > 0.2 %}badge-sedang{% else %}badge-rendah{% endif %}" style="font-size: 0.65rem;">
-                                          {% if strategy.influence > 0.5 %}Tinggi
-                                          {% elif strategy.influence > 0.2 %}Sedang
-                                          {% else %}Rendah{% endif %}
-                                        </span>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                                {% endfor %}
-                              </div>
-                          {% else %}
-                          <div class="text-center text-muted py-2">
-                            <i class="fas fa-check-circle fa-lg text-success mb-1"></i>
-                            <p class="mb-0" style="font-size: 0.8rem;">Tidak ada rekomendasi peningkatan khusus untuk wilayah ini.</p>
-                          </div>
-                          {% endif %}
-                        </div>
-                      </div>
-                    </div>
-                    </div>
-                    {% endfor %}
-                    </div>
-                    {% else %}
-                    <div class="text-center text-muted py-4">
-                      <i class="fas fa-globe fa-2x mb-2"></i>
-                      <p class="mb-0" style="font-size: 0.9rem;">Belum ada rekomendasi keseluruhan.</p>
-                    </div>
-                    {% endif %}
-                  </div>
-
-                  <!-- Rekomendasi Per Wilayah -->
-                  <div id="recWilayah">
-                    {% if selected_wilayah %}
-                    {% if wilayah_recommendations %}
-                    <div class="row">
-                    {% for rec in wilayah_recommendations %}
-                    <div class="col-md-12 mb-3">
-                    <div class="card border-0 shadow-sm">
-                      <div class="card-header {% if rec.kategori == 'Tinggi' %}header-tinggi{% elif rec.kategori == 'Sedang' %}header-sedang{% else %}header-rendah{% endif %} py-2">
-                        <div class="d-flex justify-content-between align-items-center">
-                          <h6 class="mb-0" style="font-size: 0.9rem;">
-                            <i class="fas {% if rec.kategori == 'Tinggi' %}fa-check-circle{% elif rec.kategori == 'Sedang' %}fa-exclamation-triangle{% else %}fa-exclamation-circle{% endif %} me-2"></i>
-                            {{ rec.y }}
-                          </h6>
-                          <div>
-                            {% if rec.nilai %}
-                            <span class="badge bg-light text-dark me-1" style="font-size: 0.7rem;">
-                              Nilai: {{ "%.2f"|format(rec.nilai) }}
-                            </span>
-                            {% endif %}
-                            {% if rec.kategori %}
-                            <span class="badge {% if rec.kategori == 'Tinggi' %}bg-success{% elif rec.kategori == 'Sedang' %}bg-warning{% else %}bg-danger{% endif %}" style="font-size: 0.7rem;">
-                              {{ rec.kategori }}
-                            </span>
-                            {% endif %}
-                          </div>
-                        </div>
-                      </div>
-                      <div class="card-body p-3">
-                          {% if rec.improvement_strategies %}
-                          <h6 class="mb-2" style="font-size: 0.85rem; color: black;">
-                            <i class="fas fa-arrow-up me-2"></i>Strategi Peningkatan Prioritas Keseluruhan:
-                          </h6>
-                              <div class="row g-2">
-                                {% for strategy in rec.improvement_strategies[:3] %}
-                                <div class="col-md-4 mb-2">
-                                  <div class="card border-primary h-100 {% if strategy.influence > 0.5 %}card-tinggi{% elif strategy.influence > 0.2 %}card-sedang{% else %}card-rendah{% endif %}">
-                                    <div class="card-header bg-light py-1 px-2">
-                                      <div class="d-flex justify-content-between align-items-center">
-                                        <strong class="text-primary" style="font-size: 0.8rem;">{{ strategy.name }}</strong>
-                                        <span class="badge bg-secondary" style="font-size: 0.65rem;">Skor: {{ "%.2f"|format(strategy.current_score) }}</span>
-                                      </div>
-                                    </div>
-                                    <div class="card-body p-2">
-                                      <p class="mb-1" style="font-size: 0.75rem; line-height: 1.2;">{{ strategy.strategy }}</p>
-                                      <div class="d-flex justify-content-between align-items-center mt-1">
-                                        <small class="text-muted" style="font-size: 0.7rem;">
-                                          <i class="fas fa-chart-line me-1"></i>
-                                          Pengaruh: {{ "%.3f"|format(strategy.influence) }}
-                                        </small>
-                                        <span class="badge {% if strategy.influence > 0.5 %}badge-tinggi{% elif strategy.influence > 0.2 %}badge-sedang{% else %}badge-rendah{% endif %}" style="font-size: 0.65rem;">
-                                          {% if strategy.influence > 0.5 %}Tinggi
-                                          {% elif strategy.influence > 0.2 %}Sedang
-                                          {% else %}Rendah{% endif %}
-                                        </span>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                                {% endfor %}
-                              </div>
-                          {% else %}
-                          <div class="text-center text-muted py-2">
-                            <i class="fas fa-check-circle fa-lg text-success mb-1"></i>
-                            <p class="mb-0" style="font-size: 0.8rem;">Tidak ada rekomendasi peningkatan khusus untuk wilayah ini.</p>
-                          </div>
-                          {% endif %}
-                        </div>
-                      </div>
-                    </div>
-                    </div>
-                    {% endfor %}
-                    </div>
-                    {% else %}
-                    <div class="text-center text-muted py-4">
-                      <i class="fas fa-map-marker-alt fa-2x mb-2"></i>
-                      <p class="mb-0" style="font-size: 0.9rem;">Belum ada rekomendasi spesifik untuk wilayah {{ WILAYAH_MAP.get(selected_wilayah, selected_wilayah) }}.</p>
-                    </div>
-                    {% endif %}
-                    {% else %}
-                    <div class="text-center text-muted py-4">
-                      <i class="fas fa-map-marker-alt fa-2x mb-2"></i>
-                      <p class="mb-0" style="font-size: 0.9rem;">Belum ada rekomendasi untuk kota terpilih.</p>
-                    </div>
-                    {% endif %}
-                  </div>
-
-                </div>
-              </div>
-
-              <!-- INSIGHT ANALYSIS -->
-              <div class="card shadow-lg border-0 mb-3" style="border-radius: 0.75rem; max-width: 1120px; margin: 0 auto;">
-                <div class="card-header text-white py-3" style="background-color: #631040; border-radius: 0.75rem 0.75rem 0 0;">
-                  <h3 class="mb-1" style="font-size: 18px;"><i class="fas fa-lightbulb me-2"></i>Insight Analysis</h3>
-                </div>
-                <div class="card-body">
-                  <div class="row g-2">
-                    {% for insight in insights %}
-                    <div class="col-md-6 mb-2">
-                      <div class="card border-0 bg-light h-100">
-                        <div class="card-body p-2">
-                          <div class="d-flex justify-content-center">
-                            <div class="flex-shrink-0">
-                              <i class="fas fa-chart-line text-primary fa-lg me-2"></i>
-                            </div>
-                            <div class="flex-grow-1">
-                              <p class="mb-0 fw-bold text-dark" style="font-size: 0.8rem; line-height: 1.3;">{{ insight }}</p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    {% endfor %}
-                  </div>
-                </div>
-                    </div>
-                  </div>
-
+          </div>
+          <div class="chart-card-body block">
+            <div class="ctrl" id="tabBtns">
+              <button class="seg" data-t="Y1" aria-pressed="true">Pengaruh ke Y1</button>
+              <button class="seg" data-t="Y2" aria-pressed="false">Pengaruh ke Y2</button>
+              <button class="seg" data-t="Y3" aria-pressed="false">Pengaruh ke Y3</button>
+              <button class="seg" data-t="T3" aria-pressed="false">Efek total X ke Y3</button>
             </div>
+            <div class="chart-wrap" id="chartWrap"><canvas id="chartKoef"></canvas></div>
+            <p class="caption" id="caption"></p>
           </div>
         </div>
+      </div>
 
-      <!-- ============================================-->
-      <!-- <section> begin ============================-->
-      <section class="pb-2 pb-lg-5">
+    </div>
+  </div>
 
-        <div class="container">
-          <div class="row border-top border-top-secondary pt-7">
-            <div class="col-lg-6 col-md-6 mb-4 mb-md-6 mb-lg-0 mb-sm-2 order-1 order-md-1 order-lg-1">
-              <img class="mb-4" src="{{ url_for('static', filename='assets/img/logo.svg') }}" width="184" alt="" />
-              <p class="mb-lg-" style="font-size: 18px;">Departemen Statistika Universitas Brawijaya</p>
-              <ul class="list-unstyled mb-0">
-                <li class="mb-lg-1" style="font-size: 15px;" >Jalan Veteran, Malang, 65145</a></li>
-                <li class="mb-lg-1" style="font-size: 15px;" >Jawa Timur, Indonesia</a></li>
-                <li class="mb-lg-1" style="font-size: 15px;">jurstatub@ub.ac.id</a></li>
-              </ul>
-            </div>
-          </div>
-        </div><!-- end of .container-->
 
-      </section>
-      <!-- <section> close ============================-->
-      <!-- ============================================-->
+  <!-- FOOTER -->
+  <footer class="footer-custom">
+    <div class="footer-left">
+      <span class="footer-logo"><i class="bi bi-asterisk"></i>CaSD +</span>
+      <span class="footer-separator">|</span>
+      <span class="footer-copy">&copy; 2026 Departemen Statistika Universitas Brawijaya</span>
+    </div>
 
-      <!-- ============================================-->
-      <!-- <section> begin ============================-->
-      <section class="text-center py-0">
+    <div class="footer-right">
+      <span class="footer-copy">
+        Made with <i class="bi bi-heart-fill" style="color:#b5195f;"></i> by
+        <a href="https://statistika.ub.ac.id/" target="_blank">Departemen Statistika Universitas Brawijaya</a>
+      </span>
+    </div>
+  </footer>
 
-        <div class="container">
-          <div class="container border-top py-3">
-            <div class="row justify-content-between">
-              <div class="col-12 col-md-auto">
-                <p class="mb-0">
-                  Made with<span class="fas fa-heart mx-1 text-danger"> </span>by <a class="text-decoration-none ms-1" href="https://statistika.ub.ac.id/" target="_blank">Departemen Statistika Universitas Brawijaya</a></p>
-              </div>
-            </div>
-          </div>
-        </div><!-- end of .container-->
+</div>
 
-      </section>
-      <!-- <section> close ============================-->
-      <!-- ============================================-->
 
-    </main>
-    <!-- ===============================================-->
-    <!--    End of Main Content-->
-    <!-- ===============================================-->
+<!-- JAVASCRIPT -->
+<script src="{{ url_for('static', filename='vendors/@popperjs/popper.min.js') }}"></script>
+<script src="{{ url_for('static', filename='vendors/bootstrap/bootstrap.min.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+const COEF = {{ (sem_coeffs or {})|tojson }};
+const WIL  = {{ (wilayah_map or {})|tojson }};
+const XN   = {{ (x_names or {})|tojson }};
+const YN   = {{ (y_names or {})|tojson }};
+const GREEN = '#2a9d6f', RED = '#d6455d', MAR = '#631040';
+const NAME = k => XN[k] || YN[k] ||
+  (k === 'M' ? 'Financial Technology' : (k === 'Y1_M' || k === 'Y2_M') ? 'moderasi oleh M' : k);
+const fmt  = c => (c > 0 ? '+' : '') + c.toFixed(3);
+const cls  = c => c >= 0 ? 'p' : 'n';
 
-    <!-- ===============================================-->
-    <!--    JavaScripts-->
-    <!-- ===============================================-->
-    <script src="{{ url_for('static', filename='vendors/@popperjs/popper.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='vendors/bootstrap/bootstrap.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='vendors/is/is.min.js') }}"></script>
-    <script src="https://polyfill.io/v3/polyfill.min.js?features=window.scroll"></script>
-    <script src="{{ url_for('static', filename='vendors/fontawesome/all.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='assets/js/theme.js') }}"></script>
+/* ---------- opsi wilayah + versi keseluruhan ---------- */
+// Idealnya backend mengirim COEF.ALL (hasil model dari seluruh data).
+// Jika tidak ada, dipakai rata-rata sederhana koefisien semua wilayah.
+let AVG_FALLBACK = false;
+function avgCoef() {
+  const ids = Object.keys(WIL).filter(id => id !== 'ALL'), acc = {};
+  ids.forEach(id => Object.entries(COEF[id] || {}).forEach(([t, m]) =>
+    Object.entries(m).forEach(([s, c]) => {
+      acc[t] = acc[t] || {}; acc[t][s] = acc[t][s] || [];
+      acc[t][s].push(c);
+    })));
+  const out = {};
+  Object.entries(acc).forEach(([t, m]) => {
+    out[t] = {};
+    Object.entries(m).forEach(([s, a]) => out[t][s] = a.reduce((p, q) => p + q, 0) / a.length);
+  });
+  return out;
+}
+if (!COEF.ALL && Object.keys(WIL).length) { COEF.ALL = avgCoef(); AVG_FALLBACK = true; }
+const OPTS = WIL.ALL ? WIL : Object.assign({ ALL: 'Keseluruhan (semua wilayah)' }, WIL);
+const state = { w: 'ALL', f: 'all', t: 'Y1', pin: null };
 
-    <script>
-    document.addEventListener("DOMContentLoaded", function(){
-        // Peta Hubungan toggle Y
-        const btnY1 = document.getElementById("btnY1");
-        const btnY2 = document.getElementById("btnY2");
-        const btnY3 = document.getElementById("btnY3");
-        const visualizationCardHeader = document.getElementById("visualizationCardHeader");
+/* ---------- posisi node (semua oval) ---------- */
+const POS = {
+  Y1: {x:560, y:170, l:460, r:660, h:54, t:'y'},
+  Y2: {x:560, y:410, l:460, r:660, h:54, t:'y'},
+  Y3: {x:900, y:290, l:820, r:980, h:54, t:'y'},
+  M:  {x:900, y:60,  l:820, r:980, h:54, t:'m'}
+};
+for (let i = 1; i <= 10; i++) POS['X' + i] = { x: 105, y: 45 + (i - 1) * 54, l: 10, r: 200, h: 40, t: 'x' };
+const CODE = { Y1_M: 'Y1 × M', Y2_M: 'Y2 × M' };
+const L = k => CODE[k] || k;
 
-        // Set initial state based on selected_wilayah
-        let selectedWilayah = false;
-        if(visualizationCardHeader) {
-            selectedWilayah = visualizationCardHeader.getAttribute("data-selected-wilayah") === "true";
-        }
-        if(selectedWilayah) {
-            btnY1.classList.add("active");
-            btnY1.classList.remove("btn-light");
-            btnY1.style.backgroundColor = "#b5195f";
-            btnY1.style.borderColor = "#b5195f";
-            btnY1.style.color = "#F5D2D2";
-        }
+// apakah edge e terkait dengan node k (termasuk garis moderasi)
+const rel = (e, k) => e.s === k || e.t === k || (e.s.endsWith('_M') && (k === 'M' || e.s.startsWith(k)));
 
-        function showPetaHubungan(yKey){
-            document.querySelectorAll(".peta-hubungan-image").forEach(el => {
-                el.classList.add("d-none");
-                el.classList.remove("active");
-            });
+function getEdges(w) {
+  const out = [], C = COEF[w] || {};
+  ['Y1', 'Y2', 'Y3'].forEach(t => {
+    const m = C[t] || {};
+    const ref = Math.max(...Object.values(m).map(Math.abs)) || 1;
+    Object.entries(m).forEach(([s, c]) => out.push({ s, t, c, ref }));
+  });
+  return out;
+}
 
-            const targetEl = document.getElementById("peta-" + yKey);
-            if(targetEl) {
-                targetEl.classList.remove("d-none");
-                targetEl.classList.add("active");
-            }
+const AH = 11; // panjang kepala panah; garis dipendekkan sebesar ini agar ujung panah tepat menyentuh oval
+const ELL = k => ({ p: POS[k], rx: (POS[k].r - POS[k].l) / 2, ry: POS[k].h / 2 });
+// titik x di sisi kiri/kanan oval k pada ketinggian offset dy dari pusat
+const ellX = (k, dy, side) => { const o = ELL(k); return o.p.x + side * o.rx * Math.sqrt(Math.max(0, 1 - (dy / o.ry) ** 2)); };
+// titik y di sisi atas/bawah oval k pada posisi offset dx dari pusat
+const ellY = (k, dx, side) => { const o = ELL(k); return o.p.y + side * o.ry * Math.sqrt(Math.max(0, 1 - (dx / o.rx) ** 2)); };
 
-            [btnY1, btnY2, btnY3].forEach(btn => {
-                btn.classList.remove("active");
-                btn.classList.add("btn-light");
-                btn.style.backgroundColor = "#FFFFFF";
-                btn.style.borderColor = "#FFFFFF";
-                btn.style.color = "#b5195f";
-            });
+// ujung (ujung panah) jalur Y1/Y2 -> Y3, tepat di tepi kiri oval Y3
+function yTip(s) { const dy = s === 'Y1' ? -8 : 8; return [ellX('Y3', dy, -1), POS.Y3.y + dy]; }
+// titik tengah kurva Y -> Y3 (sasaran panah moderasi)
+function yMid(s) {
+  const a = [POS[s].r, POS[s].y], t = yTip(s), ex = t[0] - AH, dx = (ex - a[0]) * 0.5;
+  return [(a[0] + 3 * (a[0] + dx) + 3 * (ex - dx) + ex) / 8, (a[1] + t[1]) / 2];
+}
 
-            const activeBtn = document.getElementById("btn" + yKey);
-            if(activeBtn) {
-                activeBtn.classList.add("active");
-                activeBtn.classList.remove("btn-light");
-                activeBtn.style.backgroundColor = "#b5195f";
-                activeBtn.style.borderColor = "#b5195f";
-                activeBtn.style.color = "#F5D2D2";
-            }
-        }
+function geom(e) {
+  // Y1 -> Y2 (vertikal)
+  if (e.s === 'Y1' && e.t === 'Y2') {
+    const y0 = POS.Y1.y + ELL('Y1').ry, y1 = POS.Y2.y - ELL('Y2').ry;
+    return { d: `M560 ${y0}L560 ${y1 - AH}`, mx: 560, my: (y0 + y1) / 2 };
+  }
+  // M -> Y3 (vertikal)
+  if (e.s === 'M') {
+    const y0 = POS.M.y + ELL('M').ry, y1 = POS.Y3.y - ELL('Y3').ry;
+    return { d: `M900 ${y0}L900 ${y1 - AH}`, mx: 900, my: (y0 + y1) / 2 };
+  }
+  // M memoderasi: panah putus-putus dari M ke tengah garis Y -> Y3
+  if (e.s === 'Y1_M' || e.s === 'Y2_M') {
+    const sx = e.s === 'Y1_M' ? 868 : 886;
+    const sy = ellY('M', sx - POS.M.x, 1);
+    const t = yMid(e.s.slice(0, 2));
+    const vx = t[0] - sx, vy = t[1] - sy, len = Math.hypot(vx, vy);
+    const ex = t[0] - vx / len * AH, ey = t[1] - vy / len * AH;
+    return { d: `M${sx} ${sy}L${ex} ${ey}`, mx: (sx + t[0]) / 2, my: (sy + t[1]) / 2 };
+  }
+  let a, tip;
+  if (e.s[0] === 'X') {
+    const i = +e.s.slice(1), dy = (i - 5.5) * 5;
+    a = [POS[e.s].r, POS[e.s].y];
+    tip = [ellX(e.t, dy, -1), POS[e.t].y + dy];
+  } else {
+    a = [POS[e.s].r, POS[e.s].y];
+    tip = yTip(e.s);
+  }
+  const ex = tip[0] - AH, dx = (ex - a[0]) * 0.5;
+  return {
+    d: `M${a[0]} ${a[1]} C${a[0] + dx} ${a[1]},${ex - dx} ${tip[1]},${ex} ${tip[1]}`,
+    mx: (a[0] + 3 * (a[0] + dx) + 3 * (ex - dx) + ex) / 8,
+    my: (a[1] + tip[1]) / 2
+  };
+}
 
-        if(btnY1) btnY1.addEventListener("click", () => showPetaHubungan("Y1"));
-        if(btnY2) btnY2.addEventListener("click", () => showPetaHubungan("Y2"));
-        if(btnY3) btnY3.addEventListener("click", () => showPetaHubungan("Y3"));
+/* ---------- gambar diagram ---------- */
+let EDGES = [];
+function draw() {
+  EDGES = getEdges(state.w);
+  let h = `<defs>
+    <marker id="arG" viewBox="0 0 10 10" refX="0" refY="5" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0L10 5L0 10z" fill="${GREEN}"/></marker>
+    <marker id="arR" viewBox="0 0 10 10" refX="0" refY="5" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0L10 5L0 10z" fill="${RED}"/></marker></defs>`;
+  let labels = '';
+  EDGES.forEach((e, i) => {
+    const g = geom(e), pos = e.c >= 0;
+    const w = 1.2 + 4.8 * Math.abs(e.c) / e.ref;
+    const yy = (e.s[0] !== 'X' ? ' yy' : '') + (e.s.endsWith('_M') ? ' mod' : '');
+    h += `<path class="edge${yy}" data-i="${i}" d="${g.d}" stroke="${pos ? GREEN : RED}" stroke-width="${w.toFixed(2)}" marker-end="url(#${pos ? 'arG' : 'arR'})"/><path class="hit" data-i="${i}" d="${g.d}"/>`;
+    labels += `<text class="elabel" data-i="${i}" x="${g.mx}" y="${g.my - 5}" text-anchor="middle">${fmt(e.c)}</text>`;
+  });
+  h += labels;
+  Object.keys(POS).forEach(k => {
+    const p = POS[k], ht = p.h;
+    let txt;
+    if (p.t === 'x') txt = `<text x="${p.x}" y="${p.y + 4}" text-anchor="middle"><tspan class="code">${k}</tspan> ${NAME(k)}</text>`;
+    else txt = `<text class="code" x="${p.x}" y="${p.y - 4}" text-anchor="middle">${k}</text><text class="sub" x="${p.x}" y="${p.y + 13}" text-anchor="middle">${NAME(k)}</text>`;
+    h += `<g class="node ${p.t === 'x' ? '' : p.t}" data-k="${k}" tabindex="0">
+      <ellipse cx="${p.x}" cy="${p.y}" rx="${(p.r - p.l) / 2}" ry="${ht / 2}"/>${txt}</g>`;
+  });
+  document.getElementById('svg').innerHTML = h;
+  bindEvents(); applyFilter(); clearHi();
+  const max = Math.max(...EDGES.map(e => Math.abs(e.c)));
+  document.getElementById('warn').style.display = max > 3 ? 'block' : 'none';
+  // Catatan rata-rata: elemen ini opsional (tidak error kalau tidak ada di HTML)
+  const avgNote = document.getElementById('avgNote');
+  if (avgNote) avgNote.style.display = (state.w === 'ALL' && AVG_FALLBACK) ? 'block' : 'none';
+}
 
-        // Recommendations toggle
-        const recOverallBtn = document.getElementById("recOverallBtn");
-        const recWilayahBtn = document.getElementById("recWilayahBtn");
-        const recOverall = document.getElementById("recOverall");
-        const recWilayah = document.getElementById("recWilayah");
+/* ---------- sorot & info ---------- */
+const svgEl = () => document.getElementById('svg');
+function highlight(pred) {
+  svgEl().querySelectorAll('.edge').forEach(el => {
+    const on = pred(EDGES[el.dataset.i]);
+    el.classList.toggle('hi', on); el.classList.toggle('dim', !on);
+  });
+  svgEl().querySelectorAll('.elabel').forEach(el => el.classList.toggle('on', pred(EDGES[el.dataset.i])));
+}
+function clearHi() {
+  svgEl().querySelectorAll('.edge').forEach(el => el.classList.remove('hi', 'dim'));
+  svgEl().querySelectorAll('.elabel').forEach(el => el.classList.toggle('on', EDGES[el.dataset.i].s[0] !== 'X'));
+  svgEl().querySelectorAll('.node').forEach(el => el.classList.remove('dim'));
+}
+function nodeInfo(k) {
+  const inc = EDGES.filter(e => e.t === k).sort((a, b) => Math.abs(b.c) - Math.abs(a.c));
+  const out = EDGES.filter(e => e.s === k || (k === 'M' && e.s.endsWith('_M'))).sort((a, b) => Math.abs(b.c) - Math.abs(a.c));
+  const li = (e, lbl) => `<li><span>${lbl}</span><span class="${cls(e.c)}">${fmt(e.c)}</span></li>`;
+  const nm = s => (s.endsWith('_M') ? L(s) : L(s) + ' ' + NAME(s));
+  let h = `<h4>${L(k)} &middot; ${NAME(k)}</h4>`;
+  if (inc.length) h += `<div class="muted">Dipengaruhi oleh:</div><ul>${inc.map(e => li(e, nm(e.s))).join('')}</ul>`;
+  if (out.length) h += `<div class="muted mt-2">Memengaruhi:</div><ul>${out.map(e => li(e, nm(e.s) + ' &rarr; ' + e.t)).join('')}</ul>`;
+  return h;
+}
+function edgeInfo(e) {
+  if (e.s.endsWith('_M')) {
+    const y = e.s.slice(0, 2);
+    return `<h4>${L(e.s)} &rarr; ${e.t}: <span class="${cls(e.c)}">${fmt(e.c)}</span></h4>
+      <div>Efek moderasi: pengaruh ${y} terhadap ${e.t} ${e.c >= 0 ? 'menguat' : 'melemah'} ketika Financial Technology (M) lebih tinggi dari rata-rata, dan sebaliknya.</div>`;
+  }
+  const arah = e.c >= 0 ? 'menaikkan' : 'menurunkan';
+  return `<h4>${L(e.s)} &rarr; ${e.t}: <span class="${cls(e.c)}">${fmt(e.c)}</span></h4>
+    <div>${NAME(e.s)} ${arah} ${NAME(e.t)}. Setiap kenaikan 1 poin pada ${L(e.s)} mengubah ${e.t} sebesar ${e.c.toFixed(3)} poin pada skala 1 sampai 5 (skor dipusatkan pada rata-rata wilayah).</div>`;
+}
+const setInfo = h => document.getElementById('info').innerHTML = h;
+const defaultInfo = () => setInfo('<span class="muted">Arahkan kursor ke variabel atau garis untuk melihat koefisiennya.</span>');
 
-        function showRecommendation(type) {
-            if(type === 'overall') {
-                recOverall.classList.remove("d-none");
-                recWilayah.classList.add("d-none");
-                [recOverallBtn, recWilayahBtn].forEach(btn => {
-                    btn.classList.remove("active");
-                    btn.classList.add("btn-light");
-                    btn.style.backgroundColor = "#FFFFFF";
-                    btn.style.borderColor = "#FFFFFF";
-                    btn.style.color = "#b5195f";
-                });
-                recOverallBtn.classList.add("active");
-                recOverallBtn.classList.remove("btn-light");
-                recOverallBtn.style.backgroundColor = "#b5195f";
-                recOverallBtn.style.borderColor = "#b5195f";
-                recOverallBtn.style.color = "#f5e5e3";
-            } else {
-                recOverall.classList.add("d-none");
-                recWilayah.classList.remove("d-none");
-                [recOverallBtn, recWilayahBtn].forEach(btn => {
-                    btn.classList.remove("active");
-                    btn.classList.add("btn-light");
-                    btn.style.backgroundColor = "#FFFFFF";
-                    btn.style.borderColor = "#FFFFFF";
-                    btn.style.color = "#b5195f";
-                });
-                recWilayahBtn.classList.add("active");
-                recWilayahBtn.classList.remove("btn-light");
-                recWilayahBtn.style.backgroundColor = "#b5195f";
-                recWilayahBtn.style.borderColor = "#b5195f";
-                recWilayahBtn.style.color = "#f5e5e3";
-            }
-        }
+function bindEvents() {
+  svgEl().querySelectorAll('.node').forEach(n => {
+    const k = n.dataset.k;
+    const on = () => { highlight(e => rel(e, k)); setInfo(nodeInfo(k)); };
+    const off = () => { if (state.pin) { pinApply(); } else { clearHi(); defaultInfo(); } };
+    n.addEventListener('mouseenter', on); n.addEventListener('focus', on);
+    n.addEventListener('mouseleave', off); n.addEventListener('blur', off);
+    n.addEventListener('click', ev => { ev.stopPropagation(); state.pin = state.pin === k ? null : k; svgEl().querySelectorAll('.node').forEach(x => x.classList.toggle('sel', x.dataset.k === state.pin)); state.pin ? pinApply() : (clearHi(), defaultInfo()); });
+    n.addEventListener('keydown', ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); n.dispatchEvent(new Event('click')); } });
+  });
+  svgEl().querySelectorAll('.hit').forEach(el => {
+    const e = EDGES[el.dataset.i];
+    el.addEventListener('mouseenter', () => { highlight(x => x === e); setInfo(edgeInfo(e)); });
+    el.addEventListener('mouseleave', () => { state.pin ? pinApply() : (clearHi(), defaultInfo()); });
+  });
+}
+svgEl().addEventListener('click', () => { state.pin = null; svgEl().querySelectorAll('.node').forEach(x => x.classList.remove('sel')); clearHi(); defaultInfo(); });
+function pinApply() { const k = state.pin; highlight(e => rel(e, k)); setInfo(nodeInfo(k)); }
 
-        if(recOverallBtn) recOverallBtn.addEventListener("click", () => showRecommendation('overall'));
-        if(recWilayahBtn) recWilayahBtn.addEventListener("click", () => showRecommendation('wilayah'));
+/* ---------- filter ---------- */
+function applyFilter() {
+  svgEl().querySelectorAll('.edge, .hit, .elabel').forEach(el => {
+    const e = EDGES[el.dataset.i];
+    const show = state.f === 'all' || (state.f === 'YY' ? (e.s === 'Y1' || e.s === 'Y2') : e.t === state.f);
+    el.classList.toggle('hide', !show);
+    if (el.classList.contains('elabel')) el.style.display = show ? '' : 'none';
+  });
+}
+
+/* ---------- ringkasan ---------- */
+function summary() {
+  const C = COEF[state.w] || {}; let h = '';
+  ['Y1', 'Y2', 'Y3'].forEach(t => {
+    const arr = Object.entries(C[t] || {});
+    const pos = arr.filter(a => a[1] > 0).sort((a, b) => b[1] - a[1])[0];
+    const neg = arr.filter(a => a[1] < 0).sort((a, b) => a[1] - b[1])[0];
+    h += `<div><b>${t} &middot; ${NAME(t)}</b>
+      Pendorong terkuat: ${pos ? `<span class="p">${L(pos[0])} ${NAME(pos[0])} (${fmt(pos[1])})</span>` : '<span class="muted">tidak ada</span>'}<br>
+      Penahan terkuat: ${neg ? `<span class="n">${L(neg[0])} ${NAME(neg[0])} (${fmt(neg[1])})</span>` : '<span class="muted">tidak ada</span>'}</div>`;
+  });
+  document.getElementById('sum').innerHTML = h;
+}
+
+/* ---------- chart koefisien ---------- */
+const CAP = {
+  Y1: 'Koefisien langsung variabel X terhadap Y1 (Digitalisasi Uang Elektronik).',
+  Y2: 'Koefisien langsung X dan Y1 terhadap Y2 (Perkembangan Cashless Society).',
+  Y3: 'Koefisien Y1, Y2, Financial Technology (M), dan efek moderasi Y1×M serta Y2×M terhadap Y3 (Pemulihan Ekonomi). Y3 tidak punya jalur langsung dari X.',
+  T3: 'Efek total tiap X terhadap Y3 = (X→Y1→Y3) + (X→Y2→Y3) + (X→Y1→Y2→Y3), dihitung dari koefisien jalur. Efek moderasi oleh M tidak ikut dihitung karena bergantung pada tingkat M.'
+};
+function chartRows() {
+  const C = COEF[state.w] || {}; let m = {};
+  if (state.t === 'T3') {
+    const c12 = (C.Y2 || {}).Y1 || 0, d1 = (C.Y3 || {}).Y1 || 0, d2 = (C.Y3 || {}).Y2 || 0;
+    for (let i = 1; i <= 10; i++) {
+      const k = 'X' + i, a = (C.Y1 || {})[k] || 0, b = (C.Y2 || {})[k] || 0;
+      m[k] = a * d1 + (b + a * c12) * d2;
+    }
+  } else m = C[state.t] || {};
+  return Object.entries(m).sort((p, q) => Math.abs(q[1]) - Math.abs(p[1]));
+}
+const valueLabels = {
+  id: 'valueLabels',
+  afterDatasetsDraw(chart) {
+    const { ctx } = chart; ctx.save();
+    ctx.font = "600 11px 'Poppins', sans-serif"; ctx.fillStyle = MAR;
+    chart.getDatasetMeta(0).data.forEach((bar, j) => {
+      const v = chart.data.datasets[0].data[j];
+      ctx.textAlign = v >= 0 ? 'left' : 'right';
+      ctx.fillText(fmt(v), bar.x + (v >= 0 ? 6 : -6), bar.y + 4);
     });
-    </script>
-  </body>
+    ctx.restore();
+  }
+};
+let chart;
+function drawChart() {
+  const rows = chartRows();
+  document.getElementById('chartWrap').style.height = Math.max(160, rows.length * 36 + 60) + 'px';
+  document.getElementById('caption').textContent = CAP[state.t];
+  const labels = rows.map(r => L(r[0]) + ' · ' + NAME(r[0]));
+  const data = rows.map(r => +r[1].toFixed(3));
+  const colors = data.map(v => v >= 0 ? GREEN : RED);
+  if (chart) {
+    chart.data.labels = labels; chart.data.datasets[0].data = data;
+    chart.data.datasets[0].backgroundColor = colors; chart.update(); return;
+  }
+  Chart.defaults.font.family = "'Poppins', sans-serif"; Chart.defaults.color = MAR;
+  chart = new Chart(document.getElementById('chartKoef'), {
+    type: 'bar',
+    data: { labels, datasets: [{ label: 'Koefisien', data, backgroundColor: colors, borderRadius: 8, borderSkipped: false, maxBarThickness: 24 }] },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      layout: { padding: { left: 6, right: 50 } },
+      plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(99,16,64,.92)', titleColor: '#fff', bodyColor: '#fff', padding: 10, cornerRadius: 10, callbacks: { label: c => ' Koefisien: ' + fmt(c.parsed.x) } } },
+      scales: { x: { grid: { color: 'rgba(99,16,64,.10)' } }, y: { grid: { display: false } } }
+    },
+    plugins: [valueLabels]
+  });
+}
 
+/* ---------- kontrol ---------- */
+const wilSel = document.getElementById('wilSelect');
+Object.entries(OPTS).forEach(([id, nm]) => {
+  const o = document.createElement('option');
+  o.value = id; o.textContent = nm;
+  wilSel.appendChild(o);
+});
+wilSel.value = state.w;
+function refreshWilayah() {
+  state.w = wilSel.value; state.pin = null;
+  // Tiap bagian dijalankan terpisah: error di diagram tidak lagi menghentikan chart/ringkasan.
+  [drawChart, draw, summary, defaultInfo].forEach(fn => {
+    try { fn(); } catch (err) { console.error('Gagal memperbarui (' + fn.name + '):', err); }
+  });
+}
+wilSel.addEventListener('change', refreshWilayah);
+wilSel.addEventListener('input', refreshWilayah);
+function group(box, attr, key) {
+  box.addEventListener('click', ev => {
+    const b = ev.target.closest('.seg'); if (!b) return;
+    box.querySelectorAll('.seg').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false'));
+    state[key] = b.dataset[attr];
+    if (key === 'f') { applyFilter(); } else { drawChart(); }
+  });
+}
+group(document.getElementById('filBtns'), 'f', 'f');
+group(document.getElementById('tabBtns'), 't', 't');
+
+// Awal halaman: langsung tampilkan "Pengaruh ke Y1" untuk wilayah terpilih.
+state.t = 'Y1';
+document.querySelectorAll('#tabBtns .seg').forEach(b => b.setAttribute('aria-pressed', b.dataset.t === 'Y1' ? 'true' : 'false'));
+[drawChart, draw, summary].forEach(fn => {
+  try { fn(); } catch (err) { console.error('Gagal memuat (' + fn.name + '):', err); }
+});
+
+/* ===== Mobile sidebar ===== */
+const mobileSidebarToggle = document.getElementById('mobile-sidebar-toggle');
+const sidebar = document.getElementById('sidebar');
+if (mobileSidebarToggle && sidebar) {
+  mobileSidebarToggle.addEventListener('click', function () {
+    sidebar.classList.toggle('show');
+  });
+}
+
+/* ===== Fullscreen ===== */
+const fullscreenButton = document.getElementById('btn-fullscreen');
+if (fullscreenButton) {
+  fullscreenButton.addEventListener('click', function () {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+    } else {
+      document.exitFullscreen();
+    }
+  });
+}
+</script>
+
+</body>
 </html>
